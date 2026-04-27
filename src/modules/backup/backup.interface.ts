@@ -1,0 +1,51 @@
+export const backupTableNames = [
+  "modules",
+  "permissions",
+  "roles",
+  "role_permissions",
+  "positions",
+  "users",
+  "user_roles",
+  "user_permissions",
+  "pupils",
+] as const;
+
+export type BackupTableName = (typeof backupTableNames)[number];
+
+export type BackupRow = Record<string, unknown>;
+
+export type BackupTableMap = {
+  [key in BackupTableName]: BackupRow[];
+};
+
+export type BackupTableDefinitionMap = {
+  [key in BackupTableName]: string;
+};
+
+export interface BackupFileItem {
+  filename: string;
+  displayName: string;
+  extension: string;
+  sizeInBytes: number;
+  downloadUrl: string;
+  storagePath: string;
+  createdAt: string;
+  lastModifiedAt: string;
+  source: "export" | "import";
+}
+
+export interface BackupListResponse {
+  totalFiles: number;
+  totalSizeInBytes: number;
+  files: BackupFileItem[];
+}
+
+export interface BackupSummary {
+  totalRecords: number;
+  tableCounts: Record<BackupTableName, number>;
+}
+
+export interface BackupMutationResponse {
+  file: BackupFileItem;
+  summary: BackupSummary;
+}
