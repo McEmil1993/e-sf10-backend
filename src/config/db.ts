@@ -79,6 +79,7 @@ const createPupilsTableSql = `
     province VARCHAR(100) NOT NULL,
     region VARCHAR(100) NOT NULL,
     status ENUM('active','inactive','transferred','graduated') NULL DEFAULT 'active',
+    profile_picture VARCHAR(255) NULL,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
@@ -86,6 +87,85 @@ const createPupilsTableSql = `
     UNIQUE KEY pupils_lrn_unique (lrn),
     KEY idx_pupils_deleted_at (deleted_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createGuardiansTableSql = `
+  CREATE TABLE IF NOT EXISTS guardians (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    firstname VARCHAR(100) NOT NULL,
+    middlename VARCHAR(100) NULL,
+    lastname VARCHAR(100) NOT NULL,
+    suffix VARCHAR(20) NULL,
+    contact_number VARCHAR(20) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    barangay VARCHAR(100) NOT NULL,
+    municipality_city VARCHAR(100) NOT NULL,
+    province VARCHAR(100) NOT NULL,
+    region VARCHAR(100) NOT NULL,
+    profile_picture VARCHAR(255) NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_guardians_deleted_at (deleted_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createPupilGuardiansTableSql = `
+  CREATE TABLE IF NOT EXISTS pupil_guardians (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    pupil_id BIGINT UNSIGNED NOT NULL,
+    guardian_id BIGINT UNSIGNED NOT NULL,
+    relationship VARCHAR(50) NOT NULL,
+    is_primary TINYINT(1) NULL DEFAULT 0,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_pupil_guardians_deleted_at (deleted_at),
+    KEY fk_pg_pupil (pupil_id),
+    KEY fk_pg_guardian (guardian_id),
+    CONSTRAINT fk_pg_pupil FOREIGN KEY (pupil_id) REFERENCES pupils (id) ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT fk_pg_guardian FOREIGN KEY (guardian_id) REFERENCES guardians (id) ON UPDATE NO ACTION ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createPupilGuardiansViewSql = `
+  CREATE OR REPLACE VIEW vw_pupil_guardians AS
+  SELECT
+    pg.id,
+    pg.pupil_id AS pupilId,
+    pg.guardian_id AS guardianId,
+    pg.relationship,
+    pg.is_primary AS isPrimary,
+    pg.created_at AS createdAt,
+    pg.updated_at AS updatedAt,
+    pg.deleted_at AS deletedAt,
+    g.firstname AS guardianFirstName,
+    g.middlename AS guardianMiddleName,
+    g.lastname AS guardianLastName,
+    g.suffix AS guardianSuffix,
+    g.contact_number AS guardianContactNumber,
+    g.address AS guardianAddress,
+    g.barangay AS guardianBarangay,
+    g.municipality_city AS guardianMunicipalityCity,
+    g.province AS guardianProvince,
+    g.region AS guardianRegion,
+    g.profile_picture AS guardianProfilePicture,
+    g.created_at AS guardianCreatedAt,
+    g.updated_at AS guardianUpdatedAt,
+    g.deleted_at AS guardianDeletedAt,
+    p.lrn AS pupilLrn,
+    p.first_name AS pupilFirstName,
+    p.middle_name AS pupilMiddleName,
+    p.last_name AS pupilLastName,
+    p.suffix AS pupilSuffix
+  FROM pupil_guardians pg
+  INNER JOIN guardians g ON g.id = pg.guardian_id
+  INNER JOIN pupils p ON p.id = pg.pupil_id
+  WHERE pg.deleted_at IS NULL
+    AND g.deleted_at IS NULL
+    AND p.deleted_at IS NULL;
 `;
 
 const userColumnMigrations = [
@@ -163,12 +243,38 @@ const pupilColumnMigrations = [
   { name: "province", sql: "ALTER TABLE pupils ADD COLUMN province VARCHAR(100) NOT NULL AFTER city_municipality" },
   { name: "region", sql: "ALTER TABLE pupils ADD COLUMN region VARCHAR(100) NOT NULL AFTER province" },
   { name: "status", sql: "ALTER TABLE pupils ADD COLUMN status ENUM('active','inactive','transferred','graduated') NULL DEFAULT 'active' AFTER region" },
+  { name: "profile_picture", sql: "ALTER TABLE pupils ADD COLUMN profile_picture VARCHAR(255) NULL AFTER status" },
   { name: "deleted_at", sql: "ALTER TABLE pupils ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL AFTER updated_at" },
 ] as const;
 
 const pupilIndexMigrations = [
   { name: "pupils_lrn_unique", sql: "ALTER TABLE pupils ADD UNIQUE KEY pupils_lrn_unique (lrn)" },
   { name: "idx_pupils_deleted_at", sql: "ALTER TABLE pupils ADD INDEX idx_pupils_deleted_at (deleted_at)" },
+] as const;
+
+const guardianColumnMigrations = [
+  { name: "firstname", sql: "ALTER TABLE guardians ADD COLUMN firstname VARCHAR(100) NOT NULL AFTER id" },
+  { name: "middlename", sql: "ALTER TABLE guardians ADD COLUMN middlename VARCHAR(100) NULL AFTER firstname" },
+  { name: "lastname", sql: "ALTER TABLE guardians ADD COLUMN lastname VARCHAR(100) NOT NULL AFTER middlename" },
+  { name: "suffix", sql: "ALTER TABLE guardians ADD COLUMN suffix VARCHAR(20) NULL AFTER lastname" },
+  {
+    name: "contact_number",
+    sql: "ALTER TABLE guardians ADD COLUMN contact_number VARCHAR(20) NOT NULL AFTER suffix",
+  },
+  { name: "address", sql: "ALTER TABLE guardians ADD COLUMN address VARCHAR(255) NOT NULL AFTER contact_number" },
+  { name: "barangay", sql: "ALTER TABLE guardians ADD COLUMN barangay VARCHAR(100) NOT NULL AFTER address" },
+  {
+    name: "municipality_city",
+    sql: "ALTER TABLE guardians ADD COLUMN municipality_city VARCHAR(100) NOT NULL AFTER barangay",
+  },
+  { name: "province", sql: "ALTER TABLE guardians ADD COLUMN province VARCHAR(100) NOT NULL AFTER municipality_city" },
+  { name: "region", sql: "ALTER TABLE guardians ADD COLUMN region VARCHAR(100) NOT NULL AFTER province" },
+  { name: "profile_picture", sql: "ALTER TABLE guardians ADD COLUMN profile_picture VARCHAR(255) NULL AFTER region" },
+  { name: "deleted_at", sql: "ALTER TABLE guardians ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL AFTER updated_at" },
+] as const;
+
+const guardianIndexMigrations = [
+  { name: "idx_guardians_deleted_at", sql: "ALTER TABLE guardians ADD INDEX idx_guardians_deleted_at (deleted_at)" },
 ] as const;
 
 interface ColumnRow extends RowDataPacket {
@@ -236,6 +342,16 @@ const hasPupilsIndex = async (indexName: string): Promise<boolean> => {
   return rows.some((row) => row.Key_name === indexName);
 };
 
+const hasGuardiansColumn = async (columnName: string): Promise<boolean> => {
+  const [rows] = await db.query<ColumnRow[]>("SHOW COLUMNS FROM guardians");
+  return rows.some((row) => row.Field === columnName);
+};
+
+const hasGuardiansIndex = async (indexName: string): Promise<boolean> => {
+  const [rows] = await db.query<IndexRow[]>("SHOW INDEX FROM guardians");
+  return rows.some((row) => row.Key_name === indexName);
+};
+
 const ensureUsersTableShape = async (): Promise<void> => {
   for (const column of userColumnMigrations) {
     if (!(await hasUsersColumn(column.name))) {
@@ -278,13 +394,31 @@ const ensurePupilsTableShape = async (): Promise<void> => {
   }
 };
 
+const ensureGuardiansTableShape = async (): Promise<void> => {
+  for (const column of guardianColumnMigrations) {
+    if (!(await hasGuardiansColumn(column.name))) {
+      await db.execute(column.sql);
+    }
+  }
+
+  for (const index of guardianIndexMigrations) {
+    if (!(await hasGuardiansIndex(index.name))) {
+      await db.execute(index.sql);
+    }
+  }
+};
+
 export const initializeDatabase = async (): Promise<void> => {
   await ensureDatabaseExists();
   await db.execute(createUsersTableSql);
   await db.execute(createPositionsTableSql);
   await db.execute(createPupilsTableSql);
+  await db.execute(createGuardiansTableSql);
+  await db.execute(createPupilGuardiansTableSql);
   await ensureUsersTableShape();
   await ensurePositionsTableShape();
   await ensurePupilsTableShape();
+  await ensureGuardiansTableShape();
+  await db.execute(createPupilGuardiansViewSql);
   await verifyDatabaseConnection();
 };

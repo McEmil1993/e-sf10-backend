@@ -1,9 +1,14 @@
 import { HttpError } from "../../common/utils/http-error";
-import { toPupilResponseDto } from "./pupil.dto";
+import { guardianRepository } from "../guardian/guardian.repository";
+import { toPupilGuardianResponseDto, toPupilResponseDto } from "./pupil.dto";
 import type {
+  CreatePupilGuardianDto,
+  CreatePupilGuardianInput,
   CreatePupilDto,
   CreatePupilInput,
   PupilRecord,
+  UpdatePupilGuardianDto,
+  UpdatePupilGuardianInput,
   UpdatePupilDto,
   UpdatePupilInput,
 } from "./pupil.interface";
@@ -35,6 +40,7 @@ const buildCreatePupilInput = async (payload: CreatePupilDto): Promise<CreatePup
     province: payload.province,
     region: payload.region,
     status: payload.status,
+    profilePicture: payload.profilePicture,
   };
 };
 
@@ -62,8 +68,46 @@ const buildUpdatePupilInput = async (
     province: payload.province ?? currentPupil.province,
     region: payload.region ?? currentPupil.region,
     status: payload.status ?? currentPupil.status,
+    profilePicture: payload.profilePicture === undefined ? currentPupil.profilePicture : payload.profilePicture,
   };
 };
+
+const buildCreatePupilGuardianInput = async (
+  payload: CreatePupilGuardianDto,
+): Promise<CreatePupilGuardianInput> => {
+  if (payload.guardianId) {
+    return {
+      guardianId: payload.guardianId,
+      relationship: payload.relationship,
+      isPrimary: payload.isPrimary,
+    };
+  }
+
+  return {
+    guardianId: null,
+    firstName: payload.firstName,
+    middleName: payload.middleName,
+    lastName: payload.lastName,
+    suffix: payload.suffix,
+    contactNumber: payload.contactNumber,
+    address: payload.address,
+    barangay: payload.barangay,
+    municipalityCity: payload.municipalityCity,
+    province: payload.province,
+    region: payload.region,
+    profilePicture: payload.profilePicture,
+    relationship: payload.relationship,
+    isPrimary: payload.isPrimary,
+  };
+};
+
+const buildUpdatePupilGuardianInput = async (
+  currentRelation: { relationship: string; isPrimary: boolean },
+  payload: UpdatePupilGuardianDto,
+): Promise<UpdatePupilGuardianInput> => ({
+  relationship: payload.relationship ?? currentRelation.relationship,
+  isPrimary: payload.isPrimary ?? currentRelation.isPrimary,
+});
 
 export const pupilService = {
   async getAllPupils() {
@@ -107,5 +151,89 @@ export const pupilService = {
     }
 
     await pupilRepository.softDeletePupil(pupilId);
+  },
+
+  async getPupilGuardians(pupilId: number) {
+    const currentPupil = await pupilRepository.findById(pupilId);
+
+    if (!currentPupil) {
+      throw new HttpError(404, "Pupil not found.");
+    }
+
+    const relations = await pupilRepository.findGuardianRelationsByPupilId(pupilId);
+    return relations.map(toPupilGuardianResponseDto);
+  },
+
+  async createPupilGuardian(pupilId: number, payload: CreatePupilGuardianDto) {
+    const currentPupil = await pupilRepository.findById(pupilId);
+
+    if (!currentPupil) {
+      throw new HttpError(404, "Pupil not found.");
+    }
+
+    const createPupilGuardianInput = await buildCreatePupilGuardianInput(payload);
+
+    if (createPupilGuardianInput.guardianId) {
+      const guardian = await guardianRepository.findById(createPupilGuardianInput.guardianId);
+
+      if (!guardian) {
+        throw new HttpError(404, "Guardian not found.");
+      }
+
+      const existingRelation = await pupilRepository.findGuardianRelationByPupilAndGuardianId(
+        pupilId,
+        createPupilGuardianInput.guardianId,
+      );
+
+      if (existingRelation) {
+        throw new HttpError(409, "Guardian is already linked to this pupil.");
+      }
+    }
+
+    const relation = await pupilRepository.createGuardianRelation(
+      pupilId,
+      createPupilGuardianInput,
+    );
+
+    return toPupilGuardianResponseDto(relation);
+  },
+
+  async updatePupilGuardian(pupilId: number, relationId: number, payload: UpdatePupilGuardianDto) {
+    const currentPupil = await pupilRepository.findById(pupilId);
+
+    if (!currentPupil) {
+      throw new HttpError(404, "Pupil not found.");
+    }
+
+    const currentRelation = await pupilRepository.findGuardianRelationById(relationId);
+
+    if (!currentRelation || currentRelation.pupilId !== pupilId) {
+      throw new HttpError(404, "Pupil guardian relation not found.");
+    }
+
+    const updatePupilGuardianInput = await buildUpdatePupilGuardianInput(currentRelation, payload);
+    const updatedRelation = await pupilRepository.updateGuardianRelation(
+      pupilId,
+      relationId,
+      updatePupilGuardianInput,
+    );
+
+    return toPupilGuardianResponseDto(updatedRelation);
+  },
+
+  async deletePupilGuardian(pupilId: number, relationId: number) {
+    const currentPupil = await pupilRepository.findById(pupilId);
+
+    if (!currentPupil) {
+      throw new HttpError(404, "Pupil not found.");
+    }
+
+    const currentRelation = await pupilRepository.findGuardianRelationById(relationId);
+
+    if (!currentRelation || currentRelation.pupilId !== pupilId) {
+      throw new HttpError(404, "Pupil guardian relation not found.");
+    }
+
+    await pupilRepository.softDeleteGuardianRelation(pupilId, relationId);
   },
 };

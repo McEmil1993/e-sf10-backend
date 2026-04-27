@@ -7,7 +7,9 @@ export const backupTableNames = [
   "users",
   "user_roles",
   "user_permissions",
+  "guardians",
   "pupils",
+  "pupil_guardians",
 ] as const;
 
 export type BackupTableName = (typeof backupTableNames)[number];

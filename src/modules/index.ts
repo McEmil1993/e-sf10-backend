@@ -5,6 +5,8 @@ import authRouter from "./auth/auth.routes";
 import { authSwaggerModule } from "./auth/auth.swagger";
 import { backupRouter } from "./backup";
 import { backupSwaggerModule } from "./backup/backup.swagger";
+import guardianRouter from "./guardian/guardian.routes";
+import { guardianSwaggerModule } from "./guardian/guardian.swagger";
 import { positionRouter } from "./position";
 import { positionSwaggerModule } from "./position/position.swagger";
 import pupilRouter from "./pupil/pupil.routes";
@@ -35,6 +37,12 @@ export const apiModules: ApiModuleDefinition[] = [
     route: "/users",
     router: userRouter,
     swagger: userSwaggerModule,
+  },
+  {
+    name: "guardians",
+    route: "/guardians",
+    router: guardianRouter,
+    swagger: guardianSwaggerModule,
   },
   {
     name: "backups",

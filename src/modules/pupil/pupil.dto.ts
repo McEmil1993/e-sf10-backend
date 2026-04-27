@@ -1,8 +1,17 @@
 import { HttpError } from "../../common/utils/http-error";
+import {
+  parseCreateGuardianDto,
+  parseGuardianIdParam,
+  toGuardianResponseDto,
+} from "../guardian/guardian.dto";
 import type {
+  CreatePupilGuardianDto,
   CreatePupilDto,
+  PupilGuardianRecord,
+  PupilGuardianResponseDto,
   PupilRecord,
   PupilResponseDto,
+  UpdatePupilGuardianDto,
   UpdatePupilDto,
 } from "./pupil.interface";
 
@@ -112,6 +121,36 @@ const getBirthdate = (value: unknown, fieldName: string): string => {
   return birthdate;
 };
 
+const getBooleanValue = (value: unknown, fieldName: string): boolean => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    if (value === 1) {
+      return true;
+    }
+
+    if (value === 0) {
+      return false;
+    }
+  }
+
+  if (typeof value === "string") {
+    const normalizedValue = value.trim().toLowerCase();
+
+    if (["1", "true", "yes"].includes(normalizedValue)) {
+      return true;
+    }
+
+    if (["0", "false", "no"].includes(normalizedValue)) {
+      return false;
+    }
+  }
+
+  throw new HttpError(400, `${fieldName} must be a boolean value.`);
+};
+
 export const parsePupilIdParam = (
   value: string | string[] | undefined,
   fieldName = "id",
@@ -147,6 +186,7 @@ export const parseCreatePupilDto = (payload: unknown): CreatePupilDto => {
     province: getRequiredString(body.province, "province"),
     region: getRequiredString(body.region, "region"),
     status: body.status === undefined ? "active" : getNormalizedStatus(body.status, "status"),
+    profilePicture: getOptionalNullableString(body.profilePicture, "profilePicture"),
   };
 };
 
@@ -210,6 +250,52 @@ export const parseUpdatePupilDto = (payload: unknown): UpdatePupilDto => {
     updatePayload.status = getNormalizedStatus(body.status, "status");
   }
 
+  if ("profilePicture" in body) {
+    updatePayload.profilePicture = getOptionalNullableString(body.profilePicture, "profilePicture");
+  }
+
+  if (Object.keys(updatePayload).length === 0) {
+    throw new HttpError(400, "At least one field is required for update.");
+  }
+
+  return updatePayload;
+};
+
+export const parseCreatePupilGuardianDto = (payload: unknown): CreatePupilGuardianDto => {
+  const body = getBodyObject(payload);
+  const relationship = getOptionalRequiredString(body.relationship, "relationship");
+  const isPrimary = "isPrimary" in body ? getBooleanValue(body.isPrimary, "isPrimary") : false;
+
+  if ("guardianId" in body && body.guardianId !== undefined && body.guardianId !== null && body.guardianId !== "") {
+    return {
+      guardianId: parseGuardianIdParam(body.guardianId as string | string[] | undefined, "guardianId"),
+      relationship,
+      isPrimary,
+    };
+  }
+
+  const guardianPayload = parseCreateGuardianDto(body);
+
+  return {
+    ...guardianPayload,
+    guardianId: null,
+    relationship,
+    isPrimary,
+  };
+};
+
+export const parseUpdatePupilGuardianDto = (payload: unknown): UpdatePupilGuardianDto => {
+  const body = getBodyObject(payload);
+  const updatePayload: UpdatePupilGuardianDto = {};
+
+  if ("relationship" in body) {
+    updatePayload.relationship = getOptionalRequiredString(body.relationship, "relationship");
+  }
+
+  if ("isPrimary" in body) {
+    updatePayload.isPrimary = getBooleanValue(body.isPrimary, "isPrimary");
+  }
+
   if (Object.keys(updatePayload).length === 0) {
     throw new HttpError(400, "At least one field is required for update.");
   }
@@ -233,7 +319,22 @@ export const toPupilResponseDto = (pupil: PupilRecord): PupilResponseDto => ({
   province: pupil.province,
   region: pupil.region,
   status: pupil.status,
+  profilePicture: pupil.profilePicture,
   createdAt: toIsoString(pupil.createdAt),
   updatedAt: toIsoString(pupil.updatedAt),
   deletedAt: toNullableIsoString(pupil.deletedAt),
+});
+
+export const toPupilGuardianResponseDto = (
+  pupilGuardian: PupilGuardianRecord,
+): PupilGuardianResponseDto => ({
+  id: pupilGuardian.id,
+  pupilId: pupilGuardian.pupilId,
+  guardianId: pupilGuardian.guardianId,
+  relationship: pupilGuardian.relationship,
+  isPrimary: pupilGuardian.isPrimary,
+  guardian: toGuardianResponseDto(pupilGuardian.guardian),
+  createdAt: toIsoString(pupilGuardian.createdAt),
+  updatedAt: toIsoString(pupilGuardian.updatedAt),
+  deletedAt: toNullableIsoString(pupilGuardian.deletedAt),
 });

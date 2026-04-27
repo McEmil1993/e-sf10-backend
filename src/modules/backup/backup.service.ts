@@ -112,6 +112,29 @@ const tableDefinitions: Record<BackupTableName, TableDefinition> = {
     dateColumns: [],
     jsonColumns: [],
   },
+  guardians: {
+    columns: [
+      "id",
+      "firstname",
+      "middlename",
+      "lastname",
+      "suffix",
+      "contact_number",
+      "address",
+      "barangay",
+      "municipality_city",
+      "province",
+      "region",
+      "profile_picture",
+      "created_at",
+      "updated_at",
+      "deleted_at",
+    ],
+    orderBy: "id ASC",
+    datetimeColumns: ["created_at", "updated_at", "deleted_at"],
+    dateColumns: [],
+    jsonColumns: [],
+  },
   pupils: {
     columns: [
       "id",
@@ -129,6 +152,7 @@ const tableDefinitions: Record<BackupTableName, TableDefinition> = {
       "province",
       "region",
       "status",
+      "profile_picture",
       "created_at",
       "updated_at",
       "deleted_at",
@@ -136,6 +160,22 @@ const tableDefinitions: Record<BackupTableName, TableDefinition> = {
     orderBy: "id ASC",
     datetimeColumns: ["created_at", "updated_at", "deleted_at"],
     dateColumns: ["birthdate"],
+    jsonColumns: [],
+  },
+  pupil_guardians: {
+    columns: [
+      "id",
+      "pupil_id",
+      "guardian_id",
+      "relationship",
+      "is_primary",
+      "created_at",
+      "updated_at",
+      "deleted_at",
+    ],
+    orderBy: "id ASC",
+    datetimeColumns: ["created_at", "updated_at", "deleted_at"],
+    dateColumns: [],
     jsonColumns: [],
   },
 };
@@ -147,7 +187,9 @@ const deleteOrder: BackupTableName[] = [
   "permissions",
   "roles",
   "modules",
+  "pupil_guardians",
   "pupils",
+  "guardians",
   "positions",
   "users",
 ];
@@ -158,10 +200,12 @@ const createOrder: BackupTableName[] = [
   "roles",
   "positions",
   "users",
+  "guardians",
   "role_permissions",
   "user_roles",
   "user_permissions",
   "pupils",
+  "pupil_guardians",
 ];
 
 const insertOrder: BackupTableName[] = [
@@ -170,10 +214,12 @@ const insertOrder: BackupTableName[] = [
   "roles",
   "positions",
   "users",
+  "guardians",
   "role_permissions",
   "user_roles",
   "user_permissions",
   "pupils",
+  "pupil_guardians",
 ];
 
 const sqlHeaderPrefix = "-- E-SF10 MySQL Backup";

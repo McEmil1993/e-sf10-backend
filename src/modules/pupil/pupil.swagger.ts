@@ -48,6 +48,7 @@ export const pupilSwaggerModule: SwaggerModule = {
         "province",
         "region",
         "status",
+        "profilePicture",
         "createdAt",
         "updatedAt",
         "deletedAt",
@@ -71,6 +72,11 @@ export const pupilSwaggerModule: SwaggerModule = {
           type: "string",
           enum: ["active", "inactive", "transferred", "graduated"],
           example: "active",
+        },
+        profilePicture: {
+          type: "string",
+          nullable: true,
+          example: "/uploads/images/pupil-profile-picture.jpg",
         },
         createdAt: { type: "string", format: "date-time", example: "2026-01-10T08:30:00.000Z" },
         updatedAt: { type: "string", format: "date-time", example: "2026-01-10T08:30:00.000Z" },
@@ -109,6 +115,11 @@ export const pupilSwaggerModule: SwaggerModule = {
           enum: ["active", "inactive", "transferred", "graduated"],
           example: "active",
         },
+        profilePicture: {
+          type: "string",
+          nullable: true,
+          example: "/uploads/images/pupil-profile-picture.jpg",
+        },
       },
     },
     UpdatePupilRequest: {
@@ -132,6 +143,11 @@ export const pupilSwaggerModule: SwaggerModule = {
           type: "string",
           enum: ["active", "inactive", "transferred", "graduated"],
           example: "transferred",
+        },
+        profilePicture: {
+          type: "string",
+          nullable: true,
+          example: "/uploads/images/pupil-profile-picture.jpg",
         },
       },
     },
