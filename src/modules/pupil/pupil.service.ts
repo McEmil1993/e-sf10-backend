@@ -85,19 +85,19 @@ const buildCreatePupilGuardianInput = async (
 
   return {
     guardianId: null,
-    firstName: payload.firstName,
-    middleName: payload.middleName,
-    lastName: payload.lastName,
-    suffix: payload.suffix,
-    contactNumber: payload.contactNumber,
-    address: payload.address,
-    barangay: payload.barangay,
-    municipalityCity: payload.municipalityCity,
-    province: payload.province,
-    region: payload.region,
-    profilePicture: payload.profilePicture,
     relationship: payload.relationship,
     isPrimary: payload.isPrimary,
+    ...(payload.firstName !== undefined ? { firstName: payload.firstName } : {}),
+    ...(payload.middleName !== undefined ? { middleName: payload.middleName } : {}),
+    ...(payload.lastName !== undefined ? { lastName: payload.lastName } : {}),
+    ...(payload.suffix !== undefined ? { suffix: payload.suffix } : {}),
+    ...(payload.contactNumber !== undefined ? { contactNumber: payload.contactNumber } : {}),
+    ...(payload.address !== undefined ? { address: payload.address } : {}),
+    ...(payload.barangay !== undefined ? { barangay: payload.barangay } : {}),
+    ...(payload.municipalityCity !== undefined ? { municipalityCity: payload.municipalityCity } : {}),
+    ...(payload.province !== undefined ? { province: payload.province } : {}),
+    ...(payload.region !== undefined ? { region: payload.region } : {}),
+    ...(payload.profilePicture !== undefined ? { profilePicture: payload.profilePicture } : {}),
   };
 };
 
