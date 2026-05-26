@@ -454,14 +454,16 @@ export const pupilRepository = {
         ],
       );
 
-      if (!shouldSetPrimary && Boolean(currentRelation.isPrimary) && hasOtherRelations) {
+      const replacementPrimaryRelation = otherRelationRows[0];
+
+      if (!shouldSetPrimary && Boolean(currentRelation.isPrimary) && hasOtherRelations && replacementPrimaryRelation) {
         await connection.execute(
           `
             UPDATE pupil_guardians
             SET is_primary = 1, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
           `,
-          [otherRelationRows[0].id],
+          [replacementPrimaryRelation.id],
         );
       }
 
