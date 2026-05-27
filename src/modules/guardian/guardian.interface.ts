@@ -5,6 +5,7 @@ export interface GuardianBaseFields {
   middleName: string | null;
   lastName: string;
   suffix: string | null;
+  relationship: string;
   contactNumber: string;
   address: string;
   barangay: string;
@@ -32,6 +33,7 @@ export interface UpdateGuardianDto {
   middleName?: string | null;
   lastName?: string;
   suffix?: string | null;
+  relationship?: string;
   contactNumber?: string;
   address?: string;
   barangay?: string;
@@ -54,6 +56,7 @@ export interface GuardianRow extends RowDataPacket {
   middleName: string | null;
   lastName: string;
   suffix: string | null;
+  relationship: string;
   contactNumber: string;
   address: string;
   barangay: string;

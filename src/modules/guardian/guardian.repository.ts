@@ -15,6 +15,7 @@ const baseGuardianSelect = `
     middlename AS middleName,
     lastname AS lastName,
     suffix,
+    relationship,
     contact_number AS contactNumber,
     address,
     barangay,
@@ -34,6 +35,7 @@ const mapGuardian = (row: GuardianRow): GuardianRecord => ({
   middleName: row.middleName,
   lastName: row.lastName,
   suffix: row.suffix,
+  relationship: row.relationship,
   contactNumber: row.contactNumber,
   address: row.address,
   barangay: row.barangay,
@@ -70,6 +72,7 @@ export const guardianRepository = {
           middlename,
           lastname,
           suffix,
+          relationship,
           contact_number,
           address,
           barangay,
@@ -78,13 +81,14 @@ export const guardianRepository = {
           region,
           profile_picture
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         payload.firstName,
         payload.middleName,
         payload.lastName,
         payload.suffix,
+        payload.relationship,
         payload.contactNumber,
         payload.address,
         payload.barangay,
@@ -113,6 +117,7 @@ export const guardianRepository = {
           middlename = ?,
           lastname = ?,
           suffix = ?,
+          relationship = ?,
           contact_number = ?,
           address = ?,
           barangay = ?,
@@ -127,6 +132,7 @@ export const guardianRepository = {
         payload.middleName,
         payload.lastName,
         payload.suffix,
+        payload.relationship,
         payload.contactNumber,
         payload.address,
         payload.barangay,

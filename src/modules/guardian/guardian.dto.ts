@@ -93,6 +93,7 @@ export const parseCreateGuardianDto = (payload: unknown): CreateGuardianDto => {
     middleName: getOptionalNullableString(body.middleName, "middleName"),
     lastName: getRequiredString(body.lastName, "lastName"),
     suffix: getOptionalNullableString(body.suffix, "suffix"),
+    relationship: getRequiredString(body.relationship, "relationship"),
     contactNumber: getContactNumber(body.contactNumber, "contactNumber"),
     address: getRequiredString(body.address, "address"),
     barangay: getRequiredString(body.barangay, "barangay"),
@@ -121,6 +122,10 @@ export const parseUpdateGuardianDto = (payload: unknown): UpdateGuardianDto => {
 
   if ("suffix" in body) {
     updatePayload.suffix = getOptionalNullableString(body.suffix, "suffix");
+  }
+
+  if ("relationship" in body) {
+    updatePayload.relationship = getOptionalRequiredString(body.relationship, "relationship");
   }
 
   if ("contactNumber" in body) {
@@ -164,6 +169,7 @@ export const toGuardianResponseDto = (guardian: GuardianRecord): GuardianRespons
   middleName: guardian.middleName,
   lastName: guardian.lastName,
   suffix: guardian.suffix,
+  relationship: guardian.relationship,
   contactNumber: guardian.contactNumber,
   address: guardian.address,
   barangay: guardian.barangay,

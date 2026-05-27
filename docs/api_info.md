@@ -277,8 +277,8 @@ All endpoints below require `Bearer {{token}}`.
 
 `RBAC` means `Role-Based Access Control`.
 
-- `module` = feature group like pupil, grades, reports, users
-- `permission` = action like `pupil.view` or `user.can_edit`
+- `module` = feature group like student, grades, reports, users
+- `permission` = action like `student.view` or `user.can_edit`
 - `role` = group of permissions like `admin`, `teacher`, `staff`
 
 ### RBAC Modules
@@ -295,8 +295,8 @@ All endpoints below require `Bearer {{token}}`.
 
 ```json
 {
-  "name": "Pupil Management",
-  "slug": "pupil",
+  "name": "Student Management",
+  "slug": "student",
   "icon": "users",
   "sortOrder": 1
 }
@@ -317,8 +317,8 @@ All endpoints below require `Bearer {{token}}`.
 
 ```json
 {
-  "name": "Pupil Management",
-  "slug": "pupil",
+  "name": "Student Management",
+  "slug": "student",
   "icon": "users",
   "sortOrder": 1
 }
@@ -345,9 +345,9 @@ All endpoints below require `Bearer {{token}}`.
 ```json
 {
   "moduleId": 1,
-  "name": "View Pupils",
-  "slug": "pupil.view",
-  "description": "Access the pupil listing and profiles."
+  "name": "View Students",
+  "slug": "student.view",
+  "description": "Access the student listing and profiles."
 }
 ```
 
@@ -372,9 +372,9 @@ Note:
 ```json
 {
   "moduleId": 1,
-  "name": "View Pupils",
-  "slug": "pupil.view",
-  "description": "Access the pupil listing and profiles."
+  "name": "View Students",
+  "slug": "student.view",
+  "description": "Access the student listing and profiles."
 }
 ```
 
@@ -399,7 +399,7 @@ Note:
 ```json
 {
   "name": "teacher",
-  "description": "Can manage pupil records, grades, and related workflows."
+  "description": "Can manage student records, grades, and related workflows."
 }
 ```
 
@@ -419,7 +419,7 @@ Note:
 ```json
 {
   "name": "teacher",
-  "description": "Can manage pupil records, grades, and related workflows."
+  "description": "Can manage student records, grades, and related workflows."
 }
 ```
 

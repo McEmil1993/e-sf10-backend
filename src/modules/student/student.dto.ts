@@ -5,15 +5,19 @@ import {
   toGuardianResponseDto,
 } from "../guardian/guardian.dto";
 import type {
-  CreatePupilGuardianDto,
-  CreatePupilDto,
-  PupilGuardianRecord,
-  PupilGuardianResponseDto,
-  PupilRecord,
-  PupilResponseDto,
-  UpdatePupilGuardianDto,
-  UpdatePupilDto,
-} from "./pupil.interface";
+  CreateStudentGuardianDto,
+  CreateStudentDto,
+  StudentGuardianRecord,
+  StudentGuardianResponseDto,
+  StudentInformationLookupRecord,
+  StudentInformationLookupsResponseDto,
+  StudentInformationRecord,
+  StudentRecord,
+  StudentResponseDto,
+  UpdateStudentGuardianDto,
+  UpdateStudentInformationDto,
+  UpdateStudentDto,
+} from "./student.interface";
 
 const toIsoString = (value: Date | string): string => {
   if (value instanceof Date) {
@@ -151,7 +155,21 @@ const getBooleanValue = (value: unknown, fieldName: string): boolean => {
   throw new HttpError(400, `${fieldName} must be a boolean value.`);
 };
 
-export const parsePupilIdParam = (
+const getOptionalPositiveInteger = (value: unknown, fieldName: string): number | null => {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const parsedValue = Number(value);
+
+  if (!Number.isInteger(parsedValue) || parsedValue <= 0) {
+    throw new HttpError(400, `${fieldName} must be a valid positive integer.`);
+  }
+
+  return parsedValue;
+};
+
+export const parseStudentIdParam = (
   value: string | string[] | undefined,
   fieldName = "id",
 ): number => {
@@ -168,7 +186,7 @@ export const parsePupilIdParam = (
   return parsedValue;
 };
 
-export const parseCreatePupilDto = (payload: unknown): CreatePupilDto => {
+export const parseCreateStudentDto = (payload: unknown): CreateStudentDto => {
   const body = getBodyObject(payload);
 
   return {
@@ -190,9 +208,9 @@ export const parseCreatePupilDto = (payload: unknown): CreatePupilDto => {
   };
 };
 
-export const parseUpdatePupilDto = (payload: unknown): UpdatePupilDto => {
+export const parseUpdateStudentDto = (payload: unknown): UpdateStudentDto => {
   const body = getBodyObject(payload);
-  const updatePayload: UpdatePupilDto = {};
+  const updatePayload: UpdateStudentDto = {};
 
   if ("lrn" in body) {
     updatePayload.lrn = getNormalizedLrn(body.lrn, "lrn");
@@ -261,7 +279,46 @@ export const parseUpdatePupilDto = (payload: unknown): UpdatePupilDto => {
   return updatePayload;
 };
 
-export const parseCreatePupilGuardianDto = (payload: unknown): CreatePupilGuardianDto => {
+export const parseUpdateStudentInformationDto = (payload: unknown): UpdateStudentInformationDto => {
+  const body = getBodyObject(payload);
+  const updatePayload: UpdateStudentInformationDto = {};
+
+  if ("motherTongueId" in body) {
+    updatePayload.motherTongueId = getOptionalPositiveInteger(body.motherTongueId, "motherTongueId");
+  }
+
+  if ("motherTongue" in body) {
+    updatePayload.motherTongue = getOptionalNullableString(body.motherTongue, "motherTongue");
+  }
+
+  if ("indigenousGroupId" in body) {
+    updatePayload.indigenousGroupId = getOptionalPositiveInteger(body.indigenousGroupId, "indigenousGroupId");
+  }
+
+  if ("indigenousGroup" in body) {
+    updatePayload.indigenousGroup = getOptionalNullableString(body.indigenousGroup, "indigenousGroup");
+  }
+
+  if ("indigenousGroupOther" in body) {
+    updatePayload.indigenousGroupOther = getOptionalNullableString(body.indigenousGroupOther, "indigenousGroupOther");
+  }
+
+  if ("religionId" in body) {
+    updatePayload.religionId = getOptionalPositiveInteger(body.religionId, "religionId");
+  }
+
+  if ("religion" in body) {
+    updatePayload.religion = getOptionalNullableString(body.religion, "religion");
+  }
+
+  if (Object.keys(updatePayload).length === 0) {
+    throw new HttpError(400, "At least one field is required for update.");
+  }
+
+  return updatePayload;
+};
+
+export const parseCreateStudentGuardianDto = (payload: unknown): CreateStudentGuardianDto => {
   const body = getBodyObject(payload);
   const relationship = getOptionalRequiredString(body.relationship, "relationship");
   const isPrimary = "isPrimary" in body ? getBooleanValue(body.isPrimary, "isPrimary") : false;
@@ -284,9 +341,9 @@ export const parseCreatePupilGuardianDto = (payload: unknown): CreatePupilGuardi
   };
 };
 
-export const parseUpdatePupilGuardianDto = (payload: unknown): UpdatePupilGuardianDto => {
+export const parseUpdateStudentGuardianDto = (payload: unknown): UpdateStudentGuardianDto => {
   const body = getBodyObject(payload);
-  const updatePayload: UpdatePupilGuardianDto = {};
+  const updatePayload: UpdateStudentGuardianDto = {};
 
   if ("relationship" in body) {
     updatePayload.relationship = getOptionalRequiredString(body.relationship, "relationship");
@@ -303,38 +360,68 @@ export const parseUpdatePupilGuardianDto = (payload: unknown): UpdatePupilGuardi
   return updatePayload;
 };
 
-export const toPupilResponseDto = (pupil: PupilRecord): PupilResponseDto => ({
-  id: pupil.id,
-  lrn: pupil.lrn,
-  firstName: pupil.firstName,
-  middleName: pupil.middleName,
-  lastName: pupil.lastName,
-  suffix: pupil.suffix,
-  sex: pupil.sex,
-  birthdate: pupil.birthdate,
-  birthplace: pupil.birthplace,
-  streetAddress: pupil.streetAddress,
-  barangay: pupil.barangay,
-  cityMunicipality: pupil.cityMunicipality,
-  province: pupil.province,
-  region: pupil.region,
-  status: pupil.status,
-  profilePicture: pupil.profilePicture,
-  createdAt: toIsoString(pupil.createdAt),
-  updatedAt: toIsoString(pupil.updatedAt),
-  deletedAt: toNullableIsoString(pupil.deletedAt),
+export const toStudentResponseDto = (student: StudentRecord): StudentResponseDto => ({
+  id: student.id,
+  lrn: student.lrn,
+  firstName: student.firstName,
+  middleName: student.middleName,
+  lastName: student.lastName,
+  suffix: student.suffix,
+  sex: student.sex,
+  birthdate: student.birthdate,
+  birthplace: student.birthplace,
+  streetAddress: student.streetAddress,
+  barangay: student.barangay,
+  cityMunicipality: student.cityMunicipality,
+  province: student.province,
+  region: student.region,
+  status: student.status,
+  profilePicture: student.profilePicture,
+  createdAt: toIsoString(student.createdAt),
+  updatedAt: toIsoString(student.updatedAt),
+  deletedAt: toNullableIsoString(student.deletedAt),
 });
 
-export const toPupilGuardianResponseDto = (
-  pupilGuardian: PupilGuardianRecord,
-): PupilGuardianResponseDto => ({
-  id: pupilGuardian.id,
-  pupilId: pupilGuardian.pupilId,
-  guardianId: pupilGuardian.guardianId,
-  relationship: pupilGuardian.relationship,
-  isPrimary: pupilGuardian.isPrimary,
-  guardian: toGuardianResponseDto(pupilGuardian.guardian),
-  createdAt: toIsoString(pupilGuardian.createdAt),
-  updatedAt: toIsoString(pupilGuardian.updatedAt),
-  deletedAt: toNullableIsoString(pupilGuardian.deletedAt),
+export const toStudentGuardianResponseDto = (
+  studentGuardian: StudentGuardianRecord,
+): StudentGuardianResponseDto => ({
+  id: studentGuardian.id,
+  studentId: studentGuardian.studentId,
+  guardianId: studentGuardian.guardianId,
+  relationship: studentGuardian.relationship,
+  isPrimary: studentGuardian.isPrimary,
+  guardian: toGuardianResponseDto(studentGuardian.guardian),
+  createdAt: toIsoString(studentGuardian.createdAt),
+  updatedAt: toIsoString(studentGuardian.updatedAt),
+  deletedAt: toNullableIsoString(studentGuardian.deletedAt),
+});
+
+export const toStudentInformationLookupResponseDto = (
+  lookup: StudentInformationLookupRecord,
+): StudentInformationLookupRecord => ({
+  id: lookup.id,
+  name: lookup.name,
+  sortOrder: lookup.sortOrder,
+  isActive: lookup.isActive,
+});
+
+export const toStudentInformationLookupsResponseDto = (
+  lookups: StudentInformationLookupsResponseDto,
+): StudentInformationLookupsResponseDto => ({
+  motherTongues: lookups.motherTongues.map(toStudentInformationLookupResponseDto),
+  indigenousGroups: lookups.indigenousGroups.map(toStudentInformationLookupResponseDto),
+  religions: lookups.religions.map(toStudentInformationLookupResponseDto),
+});
+
+export const toStudentInformationResponseDto = (
+  information: StudentInformationRecord,
+): StudentInformationRecord => ({
+  studentId: information.studentId,
+  motherTongue: information.motherTongue
+    ? toStudentInformationLookupResponseDto(information.motherTongue)
+    : null,
+  indigenousGroup: information.indigenousGroup
+    ? toStudentInformationLookupResponseDto(information.indigenousGroup)
+    : null,
+  religion: information.religion ? toStudentInformationLookupResponseDto(information.religion) : null,
 });

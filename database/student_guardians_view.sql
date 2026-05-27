@@ -1,7 +1,7 @@
-CREATE OR REPLACE VIEW vw_pupil_guardians AS
+CREATE OR REPLACE VIEW vw_student_guardians AS
 SELECT
   pg.id,
-  pg.pupil_id AS pupilId,
+  pg.student_id AS studentId,
   pg.guardian_id AS guardianId,
   pg.relationship,
   pg.is_primary AS isPrimary,
@@ -12,6 +12,7 @@ SELECT
   g.middlename AS guardianMiddleName,
   g.lastname AS guardianLastName,
   g.suffix AS guardianSuffix,
+  g.relationship AS guardianRelationship,
   g.contact_number AS guardianContactNumber,
   g.address AS guardianAddress,
   g.barangay AS guardianBarangay,
@@ -22,14 +23,14 @@ SELECT
   g.created_at AS guardianCreatedAt,
   g.updated_at AS guardianUpdatedAt,
   g.deleted_at AS guardianDeletedAt,
-  p.lrn AS pupilLrn,
-  p.first_name AS pupilFirstName,
-  p.middle_name AS pupilMiddleName,
-  p.last_name AS pupilLastName,
-  p.suffix AS pupilSuffix
-FROM pupil_guardians pg
+  p.lrn AS studentLrn,
+  p.first_name AS studentFirstName,
+  p.middle_name AS studentMiddleName,
+  p.last_name AS studentLastName,
+  p.suffix AS studentSuffix
+FROM student_guardians pg
 INNER JOIN guardians g ON g.id = pg.guardian_id
-INNER JOIN pupils p ON p.id = pg.pupil_id
+INNER JOIN students p ON p.id = pg.student_id
 WHERE pg.deleted_at IS NULL
   AND g.deleted_at IS NULL
   AND p.deleted_at IS NULL;

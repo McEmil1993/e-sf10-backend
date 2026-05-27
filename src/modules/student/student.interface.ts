@@ -4,7 +4,7 @@ import type {
   GuardianResponseDto,
 } from "../guardian/guardian.interface";
 
-export interface PupilBaseFields {
+export interface StudentBaseFields {
   lrn: string;
   firstName: string;
   middleName: string | null;
@@ -22,20 +22,20 @@ export interface PupilBaseFields {
   profilePicture: string | null;
 }
 
-export interface PupilRecord extends PupilBaseFields {
+export interface StudentRecord extends StudentBaseFields {
   id: number;
   deletedAt: Date | string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
 }
 
-export interface CreatePupilInput extends PupilBaseFields {}
+export interface CreateStudentInput extends StudentBaseFields {}
 
-export interface UpdatePupilInput extends PupilBaseFields {}
+export interface UpdateStudentInput extends StudentBaseFields {}
 
-export interface CreatePupilDto extends PupilBaseFields {}
+export interface CreateStudentDto extends StudentBaseFields {}
 
-export interface UpdatePupilDto {
+export interface UpdateStudentDto {
   lrn?: string;
   firstName?: string;
   middleName?: string | null;
@@ -53,20 +53,59 @@ export interface UpdatePupilDto {
   profilePicture?: string | null;
 }
 
-export interface PupilResponseDto extends PupilBaseFields {
+export interface StudentResponseDto extends StudentBaseFields {
   id: number;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
 }
 
-export interface PupilGuardianBaseFields {
+export type StudentInformationLookupType = "motherTongue" | "indigenousGroup" | "religion";
+
+export interface StudentInformationLookupRecord {
+  id: number;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface StudentInformationLookupsResponseDto {
+  motherTongues: StudentInformationLookupRecord[];
+  indigenousGroups: StudentInformationLookupRecord[];
+  religions: StudentInformationLookupRecord[];
+}
+
+export interface StudentInformationRecord {
+  studentId: number;
+  motherTongue: StudentInformationLookupRecord | null;
+  indigenousGroup: StudentInformationLookupRecord | null;
+  religion: StudentInformationLookupRecord | null;
+}
+
+export interface UpdateStudentInformationDto {
+  motherTongueId?: number | null;
+  motherTongue?: string | null;
+  indigenousGroupId?: number | null;
+  indigenousGroup?: string | null;
+  indigenousGroupOther?: string | null;
+  religionId?: number | null;
+  religion?: string | null;
+}
+
+export interface StudentInformationLookupRow extends RowDataPacket {
+  id: number;
+  name: string;
+  sortOrder: number;
+  isActive: number | boolean;
+}
+
+export interface StudentGuardianBaseFields {
   relationship: string;
   isPrimary: boolean;
   guardianId?: number | null;
 }
 
-export interface CreatePupilGuardianInput extends PupilGuardianBaseFields {
+export interface CreateStudentGuardianInput extends StudentGuardianBaseFields {
   firstName?: string;
   middleName?: string | null;
   lastName?: string;
@@ -80,7 +119,7 @@ export interface CreatePupilGuardianInput extends PupilGuardianBaseFields {
   profilePicture?: string | null;
 }
 
-export interface CreatePupilGuardianDto extends PupilGuardianBaseFields {
+export interface CreateStudentGuardianDto extends StudentGuardianBaseFields {
   firstName?: string;
   middleName?: string | null;
   lastName?: string;
@@ -94,16 +133,16 @@ export interface CreatePupilGuardianDto extends PupilGuardianBaseFields {
   profilePicture?: string | null;
 }
 
-export interface UpdatePupilGuardianInput extends PupilGuardianBaseFields {}
+export interface UpdateStudentGuardianInput extends StudentGuardianBaseFields {}
 
-export interface UpdatePupilGuardianDto {
+export interface UpdateStudentGuardianDto {
   relationship?: string;
   isPrimary?: boolean;
 }
 
-export interface PupilGuardianRecord extends PupilGuardianBaseFields {
+export interface StudentGuardianRecord extends StudentGuardianBaseFields {
   id: number;
-  pupilId: number;
+  studentId: number;
   guardianId: number;
   guardian: GuardianRecord;
   deletedAt: Date | string | null;
@@ -111,9 +150,9 @@ export interface PupilGuardianRecord extends PupilGuardianBaseFields {
   updatedAt: Date | string;
 }
 
-export interface PupilGuardianResponseDto extends PupilGuardianBaseFields {
+export interface StudentGuardianResponseDto extends StudentGuardianBaseFields {
   id: number;
-  pupilId: number;
+  studentId: number;
   guardianId: number;
   guardian: GuardianResponseDto;
   createdAt: string;
@@ -121,7 +160,7 @@ export interface PupilGuardianResponseDto extends PupilGuardianBaseFields {
   deletedAt: string | null;
 }
 
-export interface PupilRow extends RowDataPacket {
+export interface StudentRow extends RowDataPacket {
   id: number;
   lrn: string;
   firstName: string;
@@ -143,9 +182,9 @@ export interface PupilRow extends RowDataPacket {
   deletedAt: Date | string | null;
 }
 
-export interface PupilGuardianRow extends RowDataPacket {
+export interface StudentGuardianRow extends RowDataPacket {
   id: number;
-  pupilId: number;
+  studentId: number;
   guardianId: number;
   relationship: string;
   isPrimary: number | boolean;
@@ -153,6 +192,7 @@ export interface PupilGuardianRow extends RowDataPacket {
   guardianMiddleName: string | null;
   guardianLastName: string;
   guardianSuffix: string | null;
+  guardianRelationship: string;
   guardianContactNumber: string;
   guardianAddress: string;
   guardianBarangay: string;

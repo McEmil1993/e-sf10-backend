@@ -47,8 +47,8 @@ export const rbacSwaggerModule: SwaggerModule = {
       required: ["id", "name", "slug", "icon", "sortOrder", "createdAt", "updatedAt"],
       properties: {
         id: { type: "integer", example: 1 },
-        name: { type: "string", example: "Pupil Management" },
-        slug: { type: "string", example: "pupil" },
+        name: { type: "string", example: "Student Management" },
+        slug: { type: "string", example: "student" },
         icon: { type: "string", nullable: true, example: "users" },
         sortOrder: { type: "integer", example: 1 },
         createdAt: { type: "string", format: "date-time", example: "2026-04-01T09:00:00.000Z" },
@@ -59,8 +59,8 @@ export const rbacSwaggerModule: SwaggerModule = {
       type: "object",
       required: ["name", "slug", "sortOrder"],
       properties: {
-        name: { type: "string", example: "Pupil Management" },
-        slug: { type: "string", example: "pupil" },
+        name: { type: "string", example: "Student Management" },
+        slug: { type: "string", example: "student" },
         icon: { type: "string", nullable: true, example: "users" },
         sortOrder: { type: "integer", example: 1 },
       },
@@ -83,13 +83,13 @@ export const rbacSwaggerModule: SwaggerModule = {
       properties: {
         id: { type: "integer", example: 1 },
         moduleId: { type: "integer", example: 1 },
-        moduleName: { type: "string", example: "Pupil Management" },
-        moduleSlug: { type: "string", example: "pupil" },
+        moduleName: { type: "string", example: "Student Management" },
+        moduleSlug: { type: "string", example: "student" },
         moduleIcon: { type: "string", nullable: true, example: "users" },
         moduleSortOrder: { type: "integer", example: 1 },
-        name: { type: "string", example: "View Pupils" },
-        slug: { type: "string", example: "pupil.view" },
-        description: { type: "string", nullable: true, example: "Access the pupil listing and profiles." },
+        name: { type: "string", example: "View Students" },
+        slug: { type: "string", example: "student.view" },
+        description: { type: "string", nullable: true, example: "Access the student listing and profiles." },
         createdAt: { type: "string", format: "date-time", example: "2026-04-01T10:00:00.000Z" },
         updatedAt: { type: "string", format: "date-time", example: "2026-04-01T10:00:00.000Z" },
       },
@@ -105,9 +105,9 @@ export const rbacSwaggerModule: SwaggerModule = {
       required: ["moduleId", "name", "slug"],
       properties: {
         moduleId: { $ref: "#/components/schemas/PermissionModuleIdInput" },
-        name: { type: "string", example: "View Pupils" },
-        slug: { type: "string", example: "pupil.view" },
-        description: { type: "string", nullable: true, example: "Access the pupil listing and profiles." },
+        name: { type: "string", example: "View Students" },
+        slug: { type: "string", example: "student.view" },
+        description: { type: "string", nullable: true, example: "Access the student listing and profiles." },
       },
     },
     RoleResponse: {
@@ -133,7 +133,7 @@ export const rbacSwaggerModule: SwaggerModule = {
         description: {
           type: "string",
           nullable: true,
-          example: "Can manage pupil records, grades, and related workflows.",
+          example: "Can manage student records, grades, and related workflows.",
         },
       },
     },
@@ -205,7 +205,7 @@ export const rbacSwaggerModule: SwaggerModule = {
         permissionSlugs: {
           type: "array",
           items: { type: "string" },
-          example: ["pupil.view", "grades.view", "reports.export"],
+          example: ["student.view", "grades.view", "reports.export"],
         },
         allowOverrides: {
           type: "array",

@@ -13,24 +13,24 @@ const unauthorizedResponse = createErrorResponse(
 );
 
 const notFoundResponse = createErrorResponse(
-  "Pupil not found.",
-  "Pupil not found.",
+  "Student not found.",
+  "Student not found.",
 );
 
 const conflictResponse = createErrorResponse(
-  "Pupil conflict error.",
+  "Student conflict error.",
   "LRN is already in use.",
 );
 
-export const pupilSwaggerModule: SwaggerModule = {
+export const studentSwaggerModule: SwaggerModule = {
   tags: [
     {
-      name: "Pupils",
-      description: "Protected pupil CRUD endpoints.",
+      name: "Students",
+      description: "Protected student CRUD endpoints.",
     },
   ],
   schemas: {
-    PupilResponse: {
+    StudentResponse: {
       type: "object",
       required: [
         "id",
@@ -76,14 +76,14 @@ export const pupilSwaggerModule: SwaggerModule = {
         profilePicture: {
           type: "string",
           nullable: true,
-          example: "/uploads/images/pupil-profile-picture.jpg",
+          example: "/uploads/images/student-profile-picture.jpg",
         },
         createdAt: { type: "string", format: "date-time", example: "2026-01-10T08:30:00.000Z" },
         updatedAt: { type: "string", format: "date-time", example: "2026-01-10T08:30:00.000Z" },
         deletedAt: { type: "string", format: "date-time", nullable: true, example: null },
       },
     },
-    CreatePupilRequest: {
+    CreateStudentRequest: {
       type: "object",
       required: [
         "lrn",
@@ -118,11 +118,11 @@ export const pupilSwaggerModule: SwaggerModule = {
         profilePicture: {
           type: "string",
           nullable: true,
-          example: "/uploads/images/pupil-profile-picture.jpg",
+          example: "/uploads/images/student-profile-picture.jpg",
         },
       },
     },
-    UpdatePupilRequest: {
+    UpdateStudentRequest: {
       type: "object",
       minProperties: 1,
       properties: {
@@ -147,68 +147,148 @@ export const pupilSwaggerModule: SwaggerModule = {
         profilePicture: {
           type: "string",
           nullable: true,
-          example: "/uploads/images/pupil-profile-picture.jpg",
+          example: "/uploads/images/student-profile-picture.jpg",
         },
+      },
+    },
+    StudentInformationLookup: {
+      type: "object",
+      required: ["id", "name", "sortOrder", "isActive"],
+      properties: {
+        id: { type: "integer", example: 1 },
+        name: { type: "string", example: "Cebuano / Bisaya" },
+        sortOrder: { type: "integer", example: 2 },
+        isActive: { type: "boolean", example: true },
+      },
+    },
+    StudentInformationLookupsResponse: {
+      type: "object",
+      required: ["motherTongues", "indigenousGroups", "religions"],
+      properties: {
+        motherTongues: {
+          type: "array",
+          items: { $ref: "#/components/schemas/StudentInformationLookup" },
+        },
+        indigenousGroups: {
+          type: "array",
+          items: { $ref: "#/components/schemas/StudentInformationLookup" },
+        },
+        religions: {
+          type: "array",
+          items: { $ref: "#/components/schemas/StudentInformationLookup" },
+        },
+      },
+    },
+    StudentInformationResponse: {
+      type: "object",
+      required: ["studentId", "motherTongue", "indigenousGroup", "religion"],
+      properties: {
+        studentId: { type: "integer", example: 1 },
+        motherTongue: {
+          nullable: true,
+          allOf: [{ $ref: "#/components/schemas/StudentInformationLookup" }],
+        },
+        indigenousGroup: {
+          nullable: true,
+          allOf: [{ $ref: "#/components/schemas/StudentInformationLookup" }],
+        },
+        religion: {
+          nullable: true,
+          allOf: [{ $ref: "#/components/schemas/StudentInformationLookup" }],
+        },
+      },
+    },
+    UpdateStudentInformationRequest: {
+      type: "object",
+      minProperties: 1,
+      properties: {
+        motherTongueId: { type: "integer", nullable: true, example: 2 },
+        motherTongue: { type: "string", nullable: true, example: "Cebuano / Bisaya" },
+        indigenousGroupId: { type: "integer", nullable: true, example: 21 },
+        indigenousGroup: { type: "string", nullable: true, example: "Non-IP / Not Applicable" },
+        indigenousGroupOther: {
+          type: "string",
+          nullable: true,
+          example: "Ati",
+          description: "Creates or reuses an indigenous group lookup value when Other is selected.",
+        },
+        religionId: { type: "integer", nullable: true, example: 1 },
+        religion: { type: "string", nullable: true, example: "Roman Catholic" },
       },
     },
   },
   paths: {
-    [createApiPath("/pupils")]: {
+    [createApiPath("/students/lookups")]: {
       get: {
-        tags: ["Pupils"],
-        summary: "Get all active pupils",
+        tags: ["Students"],
+        summary: "Get student information lookup values",
         security: bearerSecurity,
         responses: {
-          "200": createSuccessResponse("Pupils fetched successfully.", "Pupils fetched successfully.", {
+          "200": createSuccessResponse(
+            "Student information lookups fetched successfully.",
+            "Student information lookups fetched successfully.",
+            { $ref: "#/components/schemas/StudentInformationLookupsResponse" },
+          ),
+          "401": unauthorizedResponse,
+        },
+      },
+    },
+    [createApiPath("/students")]: {
+      get: {
+        tags: ["Students"],
+        summary: "Get all active students",
+        security: bearerSecurity,
+        responses: {
+          "200": createSuccessResponse("Students fetched successfully.", "Students fetched successfully.", {
             type: "array",
-            items: { $ref: "#/components/schemas/PupilResponse" },
+            items: { $ref: "#/components/schemas/StudentResponse" },
           }),
           "401": unauthorizedResponse,
         },
       },
       post: {
-        tags: ["Pupils"],
-        summary: "Create pupil",
+        tags: ["Students"],
+        summary: "Create student",
         security: bearerSecurity,
         requestBody: createJsonRequestBody(
-          "Pupil create payload",
-          { $ref: "#/components/schemas/CreatePupilRequest" },
+          "Student create payload",
+          { $ref: "#/components/schemas/CreateStudentRequest" },
         ),
         responses: {
-          "201": createSuccessResponse("Pupil created successfully.", "Pupil created successfully.", {
-            $ref: "#/components/schemas/PupilResponse",
+          "201": createSuccessResponse("Student created successfully.", "Student created successfully.", {
+            $ref: "#/components/schemas/StudentResponse",
           }),
           "401": unauthorizedResponse,
           "409": conflictResponse,
         },
       },
     },
-    [createApiPath("/pupils/{id}")]: {
+    [createApiPath("/students/{id}")]: {
       get: {
-        tags: ["Pupils"],
-        summary: "Get pupil by ID",
+        tags: ["Students"],
+        summary: "Get student by ID",
         security: bearerSecurity,
         parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
         responses: {
-          "200": createSuccessResponse("Pupil fetched successfully.", "Pupil fetched successfully.", {
-            $ref: "#/components/schemas/PupilResponse",
+          "200": createSuccessResponse("Student fetched successfully.", "Student fetched successfully.", {
+            $ref: "#/components/schemas/StudentResponse",
           }),
           "401": unauthorizedResponse,
           "404": notFoundResponse,
         },
       },
       put: {
-        tags: ["Pupils"],
-        summary: "Update pupil",
+        tags: ["Students"],
+        summary: "Update student",
         security: bearerSecurity,
         parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
         requestBody: createJsonRequestBody(
-          "Pupil update payload",
-          { $ref: "#/components/schemas/UpdatePupilRequest" },
+          "Student update payload",
+          { $ref: "#/components/schemas/UpdateStudentRequest" },
         ),
         responses: {
-          "200": createSuccessResponse("Pupil updated successfully.", "Pupil updated successfully.", {
-            $ref: "#/components/schemas/PupilResponse",
+          "200": createSuccessResponse("Student updated successfully.", "Student updated successfully.", {
+            $ref: "#/components/schemas/StudentResponse",
           }),
           "401": unauthorizedResponse,
           "404": notFoundResponse,
@@ -216,14 +296,50 @@ export const pupilSwaggerModule: SwaggerModule = {
         },
       },
       delete: {
-        tags: ["Pupils"],
-        summary: "Soft delete pupil",
+        tags: ["Students"],
+        summary: "Soft delete student",
         security: bearerSecurity,
         parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
         responses: {
           "200": createSuccessResponse(
-            "Pupil soft deleted successfully.",
-            "Pupil soft deleted successfully.",
+            "Student soft deleted successfully.",
+            "Student soft deleted successfully.",
+          ),
+          "401": unauthorizedResponse,
+          "404": notFoundResponse,
+        },
+      },
+    },
+    [createApiPath("/students/{id}/information")]: {
+      get: {
+        tags: ["Students"],
+        summary: "Get student information lookup selections",
+        security: bearerSecurity,
+        parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+        responses: {
+          "200": createSuccessResponse(
+            "Student information fetched successfully.",
+            "Student information fetched successfully.",
+            { $ref: "#/components/schemas/StudentInformationResponse" },
+          ),
+          "401": unauthorizedResponse,
+          "404": notFoundResponse,
+        },
+      },
+      put: {
+        tags: ["Students"],
+        summary: "Update student information lookup selections",
+        security: bearerSecurity,
+        parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+        requestBody: createJsonRequestBody(
+          "Student information lookup payload",
+          { $ref: "#/components/schemas/UpdateStudentInformationRequest" },
+        ),
+        responses: {
+          "200": createSuccessResponse(
+            "Student information updated successfully.",
+            "Student information updated successfully.",
+            { $ref: "#/components/schemas/StudentInformationResponse" },
           ),
           "401": unauthorizedResponse,
           "404": notFoundResponse,

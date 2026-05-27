@@ -16,8 +16,8 @@ DROP TABLE IF EXISTS `role_permissions`;
 DROP TABLE IF EXISTS `permissions`;
 DROP TABLE IF EXISTS `roles`;
 DROP TABLE IF EXISTS `modules`;
-DROP TABLE IF EXISTS `pupil_guardians`;
-DROP TABLE IF EXISTS `pupils`;
+DROP TABLE IF EXISTS `student_guardians`;
+DROP TABLE IF EXISTS `students`;
 DROP TABLE IF EXISTS `guardians`;
 DROP TABLE IF EXISTS `positions`;
 DROP TABLE IF EXISTS `users`;
@@ -174,8 +174,8 @@ CREATE TABLE `user_permissions` (
   CONSTRAINT `fk_user_permissions_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Structure for table `pupils`
-CREATE TABLE `pupils` (
+-- Structure for table `students`
+CREATE TABLE `students` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `lrn` varchar(20) NOT NULL,
   `first_name` varchar(100) NOT NULL,
@@ -197,14 +197,14 @@ CREATE TABLE `pupils` (
   `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `lrn` (`lrn`),
-  UNIQUE KEY `pupils_lrn_unique` (`lrn`),
-  KEY `idx_pupils_deleted_at` (`deleted_at`)
+  UNIQUE KEY `students_lrn_unique` (`lrn`),
+  KEY `idx_students_deleted_at` (`deleted_at`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Structure for table `pupil_guardians`
-CREATE TABLE `pupil_guardians` (
+-- Structure for table `student_guardians`
+CREATE TABLE `student_guardians` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `pupil_id` bigint unsigned NOT NULL,
+  `student_id` bigint unsigned NOT NULL,
   `guardian_id` bigint unsigned NOT NULL,
   `relationship` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Mother, Father, Guardian, Aunt, Uncle, etc.',
   `is_primary` tinyint(1) DEFAULT '0' COMMENT 'Main contact guardian',
@@ -212,26 +212,26 @@ CREATE TABLE `pupil_guardians` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `fk_pg_pupil` (`pupil_id`),
+  KEY `fk_pg_student` (`student_id`),
   KEY `fk_pg_guardian` (`guardian_id`),
   CONSTRAINT `fk_pg_guardian` FOREIGN KEY (`guardian_id`) REFERENCES `guardians` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_pg_pupil` FOREIGN KEY (`pupil_id`) REFERENCES `pupils` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_pg_student` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 START TRANSACTION;
 
 -- Data for table `modules`
 INSERT INTO `modules` (`id`, `name`, `slug`, `icon`, `sort_order`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'Pupil Management', 'pupil', 'users', 1, '2026-04-01 09:00:00', '2026-04-01 09:00:00', NULL),
+(1, 'Student Management', 'student', 'users', 1, '2026-04-01 09:00:00', '2026-04-01 09:00:00', NULL),
 (2, 'Grades', 'grades', 'chart', 2, '2026-04-01 09:10:00', '2026-04-01 09:10:00', NULL),
 (3, 'Reports', 'reports', 'document', 3, '2026-04-01 09:20:00', '2026-04-01 09:20:00', NULL),
 (4, 'Users', 'user', 'users', 4, '2026-04-01 09:30:00', '2026-04-01 09:30:00', NULL);
 
 -- Data for table `permissions`
 INSERT INTO `permissions` (`id`, `module_id`, `name`, `slug`, `description`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 1, 'View Pupils', 'pupil.view', 'Access the pupil listing and profiles.', '2026-04-01 10:00:00', '2026-04-01 10:00:00', NULL),
-(2, 1, 'Create Pupil', 'pupil.create', 'Register a new pupil record.', '2026-04-01 10:05:00', '2026-04-01 10:05:00', NULL),
-(3, 1, 'Update Pupil', 'pupil.update', 'Modify pupil profile details.', '2026-04-01 10:10:00', '2026-04-01 10:10:00', NULL),
+(1, 1, 'View Students', 'student.view', 'Access the student listing and profiles.', '2026-04-01 10:00:00', '2026-04-01 10:00:00', NULL),
+(2, 1, 'Create Student', 'student.create', 'Register a new student record.', '2026-04-01 10:05:00', '2026-04-01 10:05:00', NULL),
+(3, 1, 'Update Student', 'student.update', 'Modify student profile details.', '2026-04-01 10:10:00', '2026-04-01 10:10:00', NULL),
 (4, 2, 'View Grades', 'grades.view', 'Open grade sheets and grade summaries.', '2026-04-01 10:20:00', '2026-04-01 10:20:00', NULL),
 (5, 2, 'Encode Grades', 'grades.encode', 'Input quarterly and final grades.', '2026-04-01 10:25:00', '2026-04-01 10:25:00', NULL),
 (6, 2, 'Publish Grades', 'grades.publish', 'Release grade results to users.', '2026-04-01 10:30:00', '2026-04-01 10:30:00', NULL),
@@ -247,7 +247,7 @@ INSERT INTO `permissions` (`id`, `module_id`, `name`, `slug`, `description`, `cr
 -- Data for table `roles`
 INSERT INTO `roles` (`id`, `name`, `description`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 'admin', 'Full access to all modules and configuration.', '2026-04-01 08:00:00', '2026-04-01 08:00:00', NULL),
-(2, 'teacher', 'Can manage pupil records, grades, and related workflows.', '2026-04-02 08:00:00', '2026-04-24 21:25:35', '2026-04-24 21:25:35'),
+(2, 'teacher', 'Can manage student records, grades, and related workflows.', '2026-04-02 08:00:00', '2026-04-24 21:25:35', '2026-04-24 21:25:35'),
 (3, 'staff', 'Handles enrollment, reports, and academic documentation.', '2026-04-03 08:00:00', '2026-04-24 20:24:09', NULL),
 (4, 'developer', 'Full access for development, testing, and system configuration.', '2026-04-04 08:00:00', '2026-04-04 08:00:00', NULL),
 (5, 'sample', 'This sample', '2026-04-19 19:11:28', '2026-04-24 20:24:16', '2026-04-24 20:24:16'),
@@ -367,12 +367,12 @@ INSERT INTO `user_roles` (`user_id`, `role_id`, `assigned_at`, `deleted_at`) VAL
 INSERT INTO `user_permissions` (`user_id`, `permission_id`, `type`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (2, 9, 'allow', '2026-04-19 12:51:55', '2026-04-19 12:51:55', NULL);
 
--- Data for table `pupils`
-INSERT INTO `pupils` (`id`, `lrn`, `first_name`, `middle_name`, `last_name`, `suffix`, `sex`, `birthdate`, `birthplace`, `street_address`, `barangay`, `city_municipality`, `province`, `region`, `status`, `profile_picture`, `created_at`, `updated_at`, `deleted_at`) VALUES
+-- Data for table `students`
+INSERT INTO `students` (`id`, `lrn`, `first_name`, `middle_name`, `last_name`, `suffix`, `sex`, `birthdate`, `birthplace`, `street_address`, `barangay`, `city_municipality`, `province`, `region`, `status`, `profile_picture`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, '87756576', 'Samoke', 's', 'De la cruz', NULL, 'male', '2021-02-27', 'Sample', 'Purok 6', 'Guinobatan', 'Trinidad', 'Bohol', 'Region VII', 'active', '/uploads/images/1777263760063-70888506-8d90-44cc-9a43-7d0042145b29-profile-picture.jpg', '2026-04-26 18:18:52', '2026-04-27 14:20:05', NULL);
 
--- Data for table `pupil_guardians`
-INSERT INTO `pupil_guardians` (`id`, `pupil_id`, `guardian_id`, `relationship`, `is_primary`, `created_at`, `updated_at`, `deleted_at`) VALUES
+-- Data for table `student_guardians`
+INSERT INTO `student_guardians` (`id`, `student_id`, `guardian_id`, `relationship`, `is_primary`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 1, 1, 'Father', 0, '2026-04-27 14:09:01', '2026-04-27 14:09:33', NULL),
 (2, 1, 2, 'Mother', 1, '2026-04-27 14:09:14', '2026-04-27 14:09:33', NULL);
 

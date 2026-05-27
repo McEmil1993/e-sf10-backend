@@ -8,8 +8,14 @@ export const backupTableNames = [
   "user_roles",
   "user_permissions",
   "guardians",
-  "pupils",
-  "pupil_guardians",
+  "students",
+  "student_guardians",
+  "mother_tongues",
+  "indigenous_groups",
+  "religions",
+  "student_mother_tongues",
+  "student_indigenous_groups",
+  "student_religions",
 ] as const;
 
 export type BackupTableName = (typeof backupTableNames)[number];
