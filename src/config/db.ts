@@ -62,11 +62,81 @@ const createPositionsTableSql = `
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
 
+const createSubjectsTableSql = `
+  CREATE TABLE IF NOT EXISTS subjects (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(150) NOT NULL,
+    subject_group VARCHAR(100) NULL,
+    grade_levels JSON NOT NULL,
+    is_optional TINYINT(1) NOT NULL DEFAULT 0,
+    sort_order INT NOT NULL DEFAULT 0,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY subjects_name_unique (name),
+    KEY idx_subjects_deleted_at (deleted_at),
+    KEY idx_subjects_sort_order (sort_order)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createSchoolYearsTableSql = `
+  CREATE TABLE IF NOT EXISTS school_years (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(20) NOT NULL,
+    start_date DATE NULL,
+    end_date DATE NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY school_years_name_unique (name),
+    KEY idx_school_years_deleted_at (deleted_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createTeachersTableSql = `
+  CREATE TABLE IF NOT EXISTS teachers (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY teachers_user_id_unique (user_id),
+    KEY idx_teachers_deleted_at (deleted_at),
+    CONSTRAINT fk_teachers_user FOREIGN KEY (user_id) REFERENCES users (id) ON UPDATE NO ACTION ON DELETE RESTRICT
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createSectionsTableSql = `
+  CREATE TABLE IF NOT EXISTS sections (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    school_year_id BIGINT UNSIGNED NOT NULL,
+    grade_level TINYINT UNSIGNED NOT NULL,
+    section_name VARCHAR(100) NOT NULL,
+    adviser_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY sections_year_grade_name_unique (school_year_id, grade_level, section_name),
+    KEY idx_sections_deleted_at (deleted_at),
+    KEY fk_sections_adviser (adviser_id),
+    CONSTRAINT fk_sections_school_year FOREIGN KEY (school_year_id) REFERENCES school_years (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
+    CONSTRAINT fk_sections_adviser FOREIGN KEY (adviser_id) REFERENCES teachers (id) ON UPDATE NO ACTION ON DELETE SET NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
 const createSchoolsTableSql = `
   CREATE TABLE IF NOT EXISTS schools (
     school_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     deped_school_id VARCHAR(50) NOT NULL,
     school_name VARCHAR(255) NOT NULL,
+    school_email VARCHAR(191) NULL,
+    school_number VARCHAR(50) NULL,
     district VARCHAR(150) NOT NULL,
     division VARCHAR(150) NOT NULL,
     region VARCHAR(150) NOT NULL,
@@ -80,6 +150,72 @@ const createSchoolsTableSql = `
     PRIMARY KEY (school_id),
     UNIQUE KEY schools_deped_school_id_unique (deped_school_id),
     KEY idx_schools_deleted_at (deleted_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createEmailSmtpSettingsTableSql = `
+  CREATE TABLE IF NOT EXISTS email_smtp_settings (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    provider VARCHAR(30) NOT NULL DEFAULT 'gmail',
+    gmail_email VARCHAR(191) NOT NULL,
+    gmail_app_password TEXT NOT NULL,
+    smtp_host VARCHAR(100) NOT NULL DEFAULT 'smtp.gmail.com',
+    smtp_port INT NOT NULL DEFAULT 587,
+    smtp_secure BOOLEAN NOT NULL DEFAULT FALSE,
+    is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createEmailTemplatesTableSql = `
+  CREATE TABLE IF NOT EXISTS email_templates (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    template_key VARCHAR(50) NOT NULL,
+    template_name VARCHAR(150) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    html_content MEDIUMTEXT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_email_templates_key (template_key),
+    KEY idx_email_templates_active (template_key, is_active),
+    KEY idx_email_templates_deleted_at (deleted_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createPasswordRecoveryRequestsTableSql = `
+  CREATE TABLE IF NOT EXISTS password_recovery_requests (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NOT NULL,
+    email VARCHAR(191) NOT NULL,
+    recovery_method VARCHAR(30) NOT NULL DEFAULT 'temporary_password',
+    temporary_password_hash VARCHAR(255) NULL,
+    otp_code_hash VARCHAR(255) NULL,
+    expires_at TIMESTAMP NOT NULL,
+    verified_at TIMESTAMP NULL DEFAULT NULL,
+    used_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_password_recovery_user (user_id),
+    KEY idx_password_recovery_email (email),
+    KEY idx_password_recovery_expires_at (expires_at),
+    KEY idx_password_recovery_deleted_at (deleted_at),
+    CONSTRAINT fk_password_recovery_user FOREIGN KEY (user_id) REFERENCES users (id) ON UPDATE NO ACTION ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createSystemSettingsTableSql = `
+  CREATE TABLE IF NOT EXISTS system_settings (
+    setting_key VARCHAR(100) NOT NULL,
+    setting_value TEXT NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (setting_key)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
 
@@ -149,6 +285,163 @@ const createStudentGuardiansTableSql = `
     KEY fk_pg_guardian (guardian_id),
     CONSTRAINT fk_pg_student FOREIGN KEY (student_id) REFERENCES students (id) ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT fk_pg_guardian FOREIGN KEY (guardian_id) REFERENCES guardians (id) ON UPDATE NO ACTION ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createSf10RecordsTableSql = `
+  CREATE TABLE IF NOT EXISTS sf10_records (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    student_id BIGINT UNSIGNED NOT NULL,
+    school_id BIGINT UNSIGNED NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'draft',
+    remarks TEXT NULL,
+    created_by BIGINT UNSIGNED NULL,
+    verified_by BIGINT UNSIGNED NULL,
+    certified_by BIGINT UNSIGNED NULL,
+    completed_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_sf10_records_deleted_at (deleted_at),
+    KEY fk_sf10_records_student (student_id),
+    KEY fk_sf10_records_school (school_id),
+    CONSTRAINT fk_sf10_records_student FOREIGN KEY (student_id) REFERENCES students (id) ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT fk_sf10_records_school FOREIGN KEY (school_id) REFERENCES schools (school_id) ON UPDATE NO ACTION ON DELETE SET NULL,
+    CONSTRAINT fk_sf10_records_created_by FOREIGN KEY (created_by) REFERENCES users (id) ON UPDATE NO ACTION ON DELETE SET NULL,
+    CONSTRAINT fk_sf10_records_verified_by FOREIGN KEY (verified_by) REFERENCES users (id) ON UPDATE NO ACTION ON DELETE SET NULL,
+    CONSTRAINT fk_sf10_records_certified_by FOREIGN KEY (certified_by) REFERENCES users (id) ON UPDATE NO ACTION ON DELETE SET NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createScholasticRecordsTableSql = `
+  CREATE TABLE IF NOT EXISTS scholastic_records (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    sf10_record_id BIGINT UNSIGNED NOT NULL,
+    student_id BIGINT UNSIGNED NOT NULL,
+    school_id BIGINT UNSIGNED NULL,
+    school_year_id BIGINT UNSIGNED NOT NULL,
+    section_id BIGINT UNSIGNED NULL,
+    adviser_id BIGINT UNSIGNED NULL,
+    grade_level TINYINT UNSIGNED NOT NULL,
+    section_name VARCHAR(100) NULL,
+    district VARCHAR(150) NULL,
+    division VARCHAR(150) NULL,
+    region VARCHAR(150) NULL,
+    general_average DECIMAL(5,2) NULL,
+    final_remarks VARCHAR(50) NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY scholastic_records_sf10_grade_unique (sf10_record_id, grade_level, school_year_id),
+    KEY idx_scholastic_records_deleted_at (deleted_at),
+    KEY fk_scholastic_records_student (student_id),
+    KEY fk_scholastic_records_school (school_id),
+    KEY fk_scholastic_records_school_year (school_year_id),
+    KEY fk_scholastic_records_section (section_id),
+    KEY fk_scholastic_records_adviser (adviser_id),
+    CONSTRAINT fk_scholastic_records_sf10 FOREIGN KEY (sf10_record_id) REFERENCES sf10_records (id) ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT fk_scholastic_records_student FOREIGN KEY (student_id) REFERENCES students (id) ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT fk_scholastic_records_school FOREIGN KEY (school_id) REFERENCES schools (school_id) ON UPDATE NO ACTION ON DELETE SET NULL,
+    CONSTRAINT fk_scholastic_records_school_year FOREIGN KEY (school_year_id) REFERENCES school_years (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
+    CONSTRAINT fk_scholastic_records_section FOREIGN KEY (section_id) REFERENCES sections (id) ON UPDATE NO ACTION ON DELETE SET NULL,
+    CONSTRAINT fk_scholastic_records_adviser FOREIGN KEY (adviser_id) REFERENCES teachers (id) ON UPDATE NO ACTION ON DELETE SET NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createStudentGradesTableSql = `
+  CREATE TABLE IF NOT EXISTS student_grades (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    scholastic_record_id BIGINT UNSIGNED NOT NULL,
+    subject_id BIGINT UNSIGNED NOT NULL,
+    quarter_1 DECIMAL(5,2) NULL,
+    quarter_2 DECIMAL(5,2) NULL,
+    quarter_3 DECIMAL(5,2) NULL,
+    quarter_4 DECIMAL(5,2) NULL,
+    final_rating DECIMAL(5,2) NULL,
+    remarks VARCHAR(50) NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY student_grades_record_subject_unique (scholastic_record_id, subject_id),
+    KEY idx_student_grades_deleted_at (deleted_at),
+    KEY fk_student_grades_subject (subject_id),
+    CONSTRAINT fk_student_grades_record FOREIGN KEY (scholastic_record_id) REFERENCES scholastic_records (id) ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT fk_student_grades_subject FOREIGN KEY (subject_id) REFERENCES subjects (id) ON UPDATE NO ACTION ON DELETE RESTRICT
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createRemedialClassesTableSql = `
+  CREATE TABLE IF NOT EXISTS remedial_classes (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    scholastic_record_id BIGINT UNSIGNED NOT NULL,
+    subject_id BIGINT UNSIGNED NOT NULL,
+    date_from DATE NULL,
+    date_to DATE NULL,
+    final_rating DECIMAL(5,2) NULL,
+    remedial_class_mark DECIMAL(5,2) NULL,
+    recomputed_final_grade DECIMAL(5,2) NULL,
+    remarks VARCHAR(50) NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_remedial_classes_deleted_at (deleted_at),
+    KEY fk_remedial_classes_subject (subject_id),
+    CONSTRAINT fk_remedial_classes_record FOREIGN KEY (scholastic_record_id) REFERENCES scholastic_records (id) ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT fk_remedial_classes_subject FOREIGN KEY (subject_id) REFERENCES subjects (id) ON UPDATE NO ACTION ON DELETE RESTRICT
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createEligibilityRecordsTableSql = `
+  CREATE TABLE IF NOT EXISTS eligibility_records (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    student_id BIGINT UNSIGNED NOT NULL,
+    sf10_record_id BIGINT UNSIGNED NULL,
+    credential_type VARCHAR(50) NOT NULL,
+    school_name VARCHAR(255) NULL,
+    school_id_text VARCHAR(50) NULL,
+    school_address VARCHAR(255) NULL,
+    pept_rating DECIMAL(5,2) NULL,
+    exam_date DATE NULL,
+    testing_center VARCHAR(255) NULL,
+    other_credential VARCHAR(255) NULL,
+    remarks TEXT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_eligibility_records_deleted_at (deleted_at),
+    KEY fk_eligibility_records_student (student_id),
+    KEY fk_eligibility_records_sf10 (sf10_record_id),
+    CONSTRAINT fk_eligibility_records_student FOREIGN KEY (student_id) REFERENCES students (id) ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT fk_eligibility_records_sf10 FOREIGN KEY (sf10_record_id) REFERENCES sf10_records (id) ON UPDATE NO ACTION ON DELETE SET NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createSf10CertificationsTableSql = `
+  CREATE TABLE IF NOT EXISTS sf10_certifications (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    sf10_record_id BIGINT UNSIGNED NOT NULL,
+    student_id BIGINT UNSIGNED NOT NULL,
+    eligible_for_grade TINYINT UNSIGNED NULL,
+    school_name VARCHAR(255) NULL,
+    school_id_text VARCHAR(50) NULL,
+    division VARCHAR(150) NULL,
+    last_school_year_attended VARCHAR(20) NULL,
+    principal_name VARCHAR(150) NULL,
+    certification_date DATE NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY sf10_certifications_sf10_unique (sf10_record_id),
+    KEY idx_sf10_certifications_deleted_at (deleted_at),
+    KEY fk_sf10_certifications_student (student_id),
+    CONSTRAINT fk_sf10_certifications_sf10 FOREIGN KEY (sf10_record_id) REFERENCES sf10_records (id) ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT fk_sf10_certifications_student FOREIGN KEY (student_id) REFERENCES students (id) ON UPDATE NO ACTION ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
 
@@ -389,7 +682,9 @@ const positionIndexMigrations = [
 const schoolColumnMigrations = [
   { name: "deped_school_id", sql: "ALTER TABLE schools ADD COLUMN deped_school_id VARCHAR(50) NOT NULL AFTER school_id" },
   { name: "school_name", sql: "ALTER TABLE schools ADD COLUMN school_name VARCHAR(255) NOT NULL AFTER deped_school_id" },
-  { name: "district", sql: "ALTER TABLE schools ADD COLUMN district VARCHAR(150) NOT NULL AFTER school_name" },
+  { name: "school_email", sql: "ALTER TABLE schools ADD COLUMN school_email VARCHAR(191) NULL AFTER school_name" },
+  { name: "school_number", sql: "ALTER TABLE schools ADD COLUMN school_number VARCHAR(50) NULL AFTER school_email" },
+  { name: "district", sql: "ALTER TABLE schools ADD COLUMN district VARCHAR(150) NOT NULL AFTER school_number" },
   { name: "division", sql: "ALTER TABLE schools ADD COLUMN division VARCHAR(150) NOT NULL AFTER district" },
   { name: "region", sql: "ALTER TABLE schools ADD COLUMN region VARCHAR(150) NOT NULL AFTER division" },
   { name: "address", sql: "ALTER TABLE schools ADD COLUMN address VARCHAR(255) NOT NULL AFTER region" },
@@ -466,6 +761,32 @@ const guardianIndexMigrations = [
   { name: "idx_guardians_deleted_at", sql: "ALTER TABLE guardians ADD INDEX idx_guardians_deleted_at (deleted_at)" },
 ] as const;
 
+const passwordRecoveryColumnMigrations = [
+  {
+    name: "recovery_method",
+    sql: "ALTER TABLE password_recovery_requests ADD COLUMN recovery_method VARCHAR(30) NOT NULL DEFAULT 'temporary_password' AFTER email",
+  },
+  {
+    name: "otp_code_hash",
+    sql: "ALTER TABLE password_recovery_requests ADD COLUMN otp_code_hash VARCHAR(255) NULL AFTER temporary_password_hash",
+  },
+  {
+    name: "verified_at",
+    sql: "ALTER TABLE password_recovery_requests ADD COLUMN verified_at TIMESTAMP NULL DEFAULT NULL AFTER expires_at",
+  },
+  {
+    name: "deleted_at",
+    sql: "ALTER TABLE password_recovery_requests ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL AFTER created_at",
+  },
+] as const;
+
+const passwordRecoveryIndexMigrations = [
+  {
+    name: "idx_password_recovery_deleted_at",
+    sql: "ALTER TABLE password_recovery_requests ADD INDEX idx_password_recovery_deleted_at (deleted_at)",
+  },
+] as const;
+
 const motherTongueSeedValues = [
   "Filipino / Tagalog",
   "Cebuano / Bisaya",
@@ -528,8 +849,26 @@ const religionSeedValues = [
   "N/A",
 ] as const;
 
+const subjectSeedValues = [
+  { name: "Mother Tongue", subjectGroup: "Core", gradeLevels: [1, 2, 3], isOptional: false },
+  { name: "Filipino", subjectGroup: "Core", gradeLevels: [1, 2, 3, 4, 5, 6], isOptional: false },
+  { name: "English", subjectGroup: "Core", gradeLevels: [1, 2, 3, 4, 5, 6], isOptional: false },
+  { name: "Mathematics", subjectGroup: "Core", gradeLevels: [1, 2, 3, 4, 5, 6], isOptional: false },
+  { name: "Science", subjectGroup: "Core", gradeLevels: [1, 2, 3, 4, 5, 6], isOptional: false },
+  { name: "Araling Panlipunan", subjectGroup: "Core", gradeLevels: [1, 2, 3, 4, 5, 6], isOptional: false },
+  { name: "EPP", subjectGroup: "EPP / TLE", gradeLevels: [4, 5, 6], isOptional: false },
+  { name: "Music", subjectGroup: "MAPEH", gradeLevels: [1, 2, 3, 4, 5, 6], isOptional: false },
+  { name: "Arts", subjectGroup: "MAPEH", gradeLevels: [1, 2, 3, 4, 5, 6], isOptional: false },
+  { name: "Physical Education", subjectGroup: "MAPEH", gradeLevels: [1, 2, 3, 4, 5, 6], isOptional: false },
+  { name: "Health", subjectGroup: "MAPEH", gradeLevels: [1, 2, 3, 4, 5, 6], isOptional: false },
+  { name: "Edukasyon sa Pagpapakatao", subjectGroup: "Core", gradeLevels: [1, 2, 3, 4, 5, 6], isOptional: false },
+  { name: "Arabic Language", subjectGroup: "ALIVE Program", gradeLevels: [1, 2, 3, 4, 5, 6], isOptional: true },
+  { name: "Islamic Values Education", subjectGroup: "ALIVE Program", gradeLevels: [1, 2, 3, 4, 5, 6], isOptional: true },
+] as const;
+
 interface ColumnRow extends RowDataPacket {
   Field: string;
+  Null?: "YES" | "NO";
 }
 
 interface IndexRow extends RowDataPacket {
@@ -817,6 +1156,42 @@ const hasGuardiansIndex = async (indexName: string): Promise<boolean> => {
   return rows.some((row) => row.Key_name === indexName);
 };
 
+const ensureTeachersTableShape = async (): Promise<void> => {
+  if (!(await hasColumn("teachers", "user_id"))) {
+    await db.execute("ALTER TABLE teachers ADD COLUMN user_id BIGINT UNSIGNED NULL AFTER id");
+  }
+
+  try {
+    await dropIndexIfExists("teachers", "teachers_employee_number_unique");
+  } catch (error) {
+    const mysqlError = error as { code?: string };
+
+    if (mysqlError.code !== "ER_CANT_DROP_FIELD_OR_KEY") {
+      throw error;
+    }
+  }
+
+  for (const columnName of ["employee_number", "position", "suffix", "last_name", "middle_name", "first_name"]) {
+    if (await hasColumn("teachers", columnName)) {
+      await db.execute(`ALTER TABLE teachers DROP COLUMN \`${columnName}\``);
+    }
+  }
+
+  if (!(await hasIndex("teachers", "teachers_user_id_unique"))) {
+    await db.execute("ALTER TABLE teachers ADD UNIQUE KEY teachers_user_id_unique (user_id)");
+  }
+
+  if (!(await hasIndex("teachers", "idx_teachers_deleted_at"))) {
+    await db.execute("ALTER TABLE teachers ADD INDEX idx_teachers_deleted_at (deleted_at)");
+  }
+
+  if (!(await hasForeignKey("teachers", "fk_teachers_user"))) {
+    await db.execute(
+      "ALTER TABLE teachers ADD CONSTRAINT fk_teachers_user FOREIGN KEY (user_id) REFERENCES users (id) ON UPDATE NO ACTION ON DELETE RESTRICT",
+    );
+  }
+};
+
 const ensureUsersTableShape = async (): Promise<void> => {
   for (const column of userColumnMigrations) {
     if (!(await hasUsersColumn(column.name))) {
@@ -887,6 +1262,28 @@ const ensureGuardiansTableShape = async (): Promise<void> => {
   }
 };
 
+const ensurePasswordRecoveryRequestsTableShape = async (): Promise<void> => {
+  for (const column of passwordRecoveryColumnMigrations) {
+    if (!(await hasColumn("password_recovery_requests", column.name))) {
+      await db.execute(column.sql);
+    }
+  }
+
+  const [temporaryPasswordColumns] = await db.query<ColumnRow[]>(
+    "SHOW COLUMNS FROM password_recovery_requests LIKE 'temporary_password_hash'",
+  );
+
+  if (temporaryPasswordColumns[0]?.Null === "NO") {
+    await db.execute("ALTER TABLE password_recovery_requests MODIFY COLUMN temporary_password_hash VARCHAR(255) NULL");
+  }
+
+  for (const index of passwordRecoveryIndexMigrations) {
+    if (!(await hasIndex("password_recovery_requests", index.name))) {
+      await db.execute(index.sql);
+    }
+  }
+};
+
 const seedLookupTable = async (tableName: string, values: readonly string[]): Promise<void> => {
   const rows = values.map((value, index) => [value, index + 1]);
 
@@ -909,6 +1306,37 @@ const seedStudentInformationLookups = async (): Promise<void> => {
   await seedLookupTable("religions", religionSeedValues);
 };
 
+const seedSubjects = async (): Promise<void> => {
+  const rows = subjectSeedValues.map((subject, index) => [
+    subject.name,
+    subject.subjectGroup,
+    JSON.stringify(subject.gradeLevels),
+    subject.isOptional ? 1 : 0,
+    index + 1,
+  ]);
+
+  await db.query(
+    `
+      INSERT INTO subjects (
+        name,
+        subject_group,
+        grade_levels,
+        is_optional,
+        sort_order
+      )
+      VALUES ?
+      ON DUPLICATE KEY UPDATE
+        subject_group = VALUES(subject_group),
+        grade_levels = VALUES(grade_levels),
+        is_optional = VALUES(is_optional),
+        sort_order = VALUES(sort_order),
+        is_active = 1,
+        deleted_at = NULL
+    `,
+    [rows],
+  );
+};
+
 const seedDefaultSchool = async (): Promise<void> => {
   await db.execute(
     `
@@ -916,12 +1344,14 @@ const seedDefaultSchool = async (): Promise<void> => {
         school_id,
         deped_school_id,
         school_name,
+        school_email,
+        school_number,
         district,
         division,
         region,
         address
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         school_id = school_id
     `,
@@ -929,6 +1359,8 @@ const seedDefaultSchool = async (): Promise<void> => {
       1,
       "118768",
       "Trinidad 1 Central Elementary School",
+      null,
+      null,
       "Trinidad I",
       "Bohol",
       "Region VII - Central Visayas",
@@ -937,15 +1369,40 @@ const seedDefaultSchool = async (): Promise<void> => {
   );
 };
 
+const seedDefaultSystemSettings = async (): Promise<void> => {
+  await db.execute(
+    `
+      INSERT INTO system_settings (setting_key, setting_value)
+      VALUES ('forgot_password_method', 'temporary_password')
+      ON DUPLICATE KEY UPDATE
+        setting_key = setting_key
+    `,
+  );
+};
+
 export const initializeDatabase = async (): Promise<void> => {
   await ensureDatabaseExists();
   await migrateLegacyStudentTables();
   await db.execute(createUsersTableSql);
   await db.execute(createPositionsTableSql);
+  await db.execute(createSubjectsTableSql);
+  await db.execute(createSchoolYearsTableSql);
+  await db.execute(createTeachersTableSql);
   await db.execute(createSchoolsTableSql);
+  await db.execute(createEmailSmtpSettingsTableSql);
+  await db.execute(createEmailTemplatesTableSql);
+  await db.execute(createPasswordRecoveryRequestsTableSql);
+  await db.execute(createSystemSettingsTableSql);
   await db.execute(createStudentsTableSql);
   await db.execute(createGuardiansTableSql);
+  await db.execute(createSectionsTableSql);
   await db.execute(createStudentGuardiansTableSql);
+  await db.execute(createSf10RecordsTableSql);
+  await db.execute(createScholasticRecordsTableSql);
+  await db.execute(createStudentGradesTableSql);
+  await db.execute(createRemedialClassesTableSql);
+  await db.execute(createEligibilityRecordsTableSql);
+  await db.execute(createSf10CertificationsTableSql);
   await db.execute(createMotherTonguesTableSql);
   await db.execute(createIndigenousGroupsTableSql);
   await db.execute(createReligionsTableSql);
@@ -954,11 +1411,15 @@ export const initializeDatabase = async (): Promise<void> => {
   await db.execute(createStudentReligionsTableSql);
   await ensureUsersTableShape();
   await ensurePositionsTableShape();
+  await ensureTeachersTableShape();
   await ensureSchoolsTableShape();
+  await ensurePasswordRecoveryRequestsTableShape();
   await ensureStudentsTableShape();
   await ensureGuardiansTableShape();
   await seedDefaultSchool();
+  await seedDefaultSystemSettings();
   await seedStudentInformationLookups();
+  await seedSubjects();
   await db.execute(createStudentGuardiansViewSql);
   await db.execute(createStudentInformationViewSql);
   await verifyDatabaseConnection();

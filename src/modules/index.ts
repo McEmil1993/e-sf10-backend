@@ -1,6 +1,7 @@
 import type { Router } from "express";
 
 import type { SwaggerModule } from "../docs/swagger.types";
+import { academicRouter, academicSwaggerModule } from "./academic";
 import authRouter from "./auth/auth.routes";
 import { authSwaggerModule } from "./auth/auth.swagger";
 import { backupRouter } from "./backup";
@@ -15,6 +16,8 @@ import { rbacRouter } from "./rbac";
 import { rbacSwaggerModule } from "./rbac/rbac.swagger";
 import { systemRouter } from "./system";
 import { systemSwaggerModule } from "./system/system.swagger";
+import { subjectRouter } from "./subject";
+import { subjectSwaggerModule } from "./subject/subject.swagger";
 import uploadRouter from "./upload/upload.routes";
 import { uploadSwaggerModule } from "./upload/upload.swagger";
 import userRouter from "./user/user.routes";
@@ -59,10 +62,22 @@ export const apiModules: ApiModuleDefinition[] = [
     swagger: studentSwaggerModule,
   },
   {
+    name: "academic",
+    route: "/academic",
+    router: academicRouter,
+    swagger: academicSwaggerModule,
+  },
+  {
     name: "positions",
     route: "/positions",
     router: positionRouter,
     swagger: positionSwaggerModule,
+  },
+  {
+    name: "subjects",
+    route: "/subjects",
+    router: subjectRouter,
+    swagger: subjectSwaggerModule,
   },
   {
     name: "uploads",
