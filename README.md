@@ -1,3 +1,45 @@
+
+First, set your preferred port in `.env`:
+
+```bash
+PORT=5555
+NODE_ENV=development
+
+DB_CONNECTION=mysql
+DB_HOST=localhost
+DB_USER=esf_user
+DB_PASS=StrongPassword123!
+DB_NAME=esf_db_v2
+DB_PORT=3309
+
+JWT_SECRET="your_token_generate_GUID_in_online"
+JWT_EXPIRES_IN="7d"
+CORS_ORIGINS=http://localhost:3333
+
+```
+Then, install node
+```bash
+npm i
+# or
+npm install
+```
+
+Then, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open `http://localhost:<your-port>` with your browser to see the result.
+
+
+
 # Backend Steps: Add a New Module or API Endpoint
 
 Guide ito para magdagdag ng bagong backend module sa current system.
