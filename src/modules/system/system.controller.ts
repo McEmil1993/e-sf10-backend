@@ -6,6 +6,7 @@ import {
   parseEmailTemplateKey,
   parseUpdatePasswordRecoverySettingsDto,
   parseUpdateEmailSmtpSettingsDto,
+  parseUpdatePrincipalSettingsDto,
   parseUpdateSchoolDto,
   parseUpsertEmailTemplateDto,
 } from "./system.dto";
@@ -57,6 +58,17 @@ export const systemController = {
     const payload = parseUpdatePasswordRecoverySettingsDto(request.body);
     const settings = await systemService.updatePasswordRecoverySettings(payload);
     sendSuccess(response, 200, "Password recovery settings updated successfully.", settings);
+  },
+
+  async getPrincipalSettings(_request: Request, response: Response): Promise<void> {
+    const settings = await systemService.getPrincipalSettings();
+    sendSuccess(response, 200, "Principal settings fetched successfully.", settings);
+  },
+
+  async updatePrincipalSettings(request: Request, response: Response): Promise<void> {
+    const payload = parseUpdatePrincipalSettingsDto(request.body);
+    const settings = await systemService.updatePrincipalSettings(payload);
+    sendSuccess(response, 200, "Principal settings updated successfully.", settings);
   },
 
   async listEmailTemplates(request: Request, response: Response): Promise<void> {

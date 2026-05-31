@@ -12,3 +12,16 @@ Error: Can't DROP 'teachers_employee_number_unique'; check that column/key exist
   sqlState: '42000',
   sqlMessage: "Can't DROP 'teachers_employee_number_unique'; check that column/key exists"
 }
+Failed to start server.
+Error: Can't DROP 'grade_level'; check that column/key exists
+    at PromisePool.execute (C:\Users\mdacoylo\Documents\TMC\E-SF10\backend\node_modules\mysql2\lib\promise\pool.js:54:22)
+    at ensureEnrollmentsTableShape (C:\Users\mdacoylo\Documents\TMC\E-SF10\backend\src\config\db.ts:1228:14)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at initializeDatabase (C:\Users\mdacoylo\Documents\TMC\E-SF10\backend\src\config\db.ts:1454:3)
+    at startServer (C:\Users\mdacoylo\Documents\TMC\E-SF10\backend\src\server.ts:7:5) {
+  code: 'ER_CANT_DROP_FIELD_OR_KEY',
+  errno: 1091,
+  sql: 'ALTER TABLE enrollments DROP COLUMN grade_level',
+  sqlState: '42000',
+  sqlMessage: "Can't DROP 'grade_level'; check that column/key exists"
+}

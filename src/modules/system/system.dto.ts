@@ -7,10 +7,13 @@ import type {
   EmailTemplateResponseDto,
   ForgotPasswordMethod,
   PasswordRecoverySettingsResponseDto,
+  PrincipalSettingsRecord,
+  PrincipalSettingsResponseDto,
   SchoolRecord,
   SchoolResponseDto,
   UpdateEmailSmtpSettingsDto,
   UpdatePasswordRecoverySettingsDto,
+  UpdatePrincipalSettingsDto,
   UpdateSchoolDto,
   UpsertEmailTemplateDto,
 } from "./system.interface";
@@ -112,6 +115,20 @@ const getForgotPasswordMethod = (value: unknown): ForgotPasswordMethod => {
   }
 
   return value as ForgotPasswordMethod;
+};
+
+const getOptionalPositiveInteger = (value: unknown, fieldName: string): number | null => {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const parsedValue = typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number.NaN;
+
+  if (!Number.isInteger(parsedValue) || parsedValue <= 0) {
+    throw new HttpError(400, `${fieldName} must be a positive integer or null.`);
+  }
+
+  return parsedValue;
 };
 
 export const parseUpdateSchoolDto = (payload: unknown): UpdateSchoolDto => {
@@ -255,6 +272,16 @@ export const parseUpdatePasswordRecoverySettingsDto = (
   };
 };
 
+export const parseUpdatePrincipalSettingsDto = (
+  payload: unknown,
+): UpdatePrincipalSettingsDto => {
+  const body = getBodyObject(payload);
+
+  return {
+    activePrincipalUserId: getOptionalPositiveInteger(body.activePrincipalUserId, "activePrincipalUserId"),
+  };
+};
+
 export const toPasswordRecoverySettingsResponseDto = (
   forgotPasswordMethod: string | null,
 ): PasswordRecoverySettingsResponseDto => {
@@ -263,6 +290,12 @@ export const toPasswordRecoverySettingsResponseDto = (
       ? (forgotPasswordMethod as ForgotPasswordMethod)
       : "temporary_password",
   };
+};
+
+export const toPrincipalSettingsResponseDto = (
+  settings: PrincipalSettingsRecord,
+): PrincipalSettingsResponseDto => {
+  return settings;
 };
 
 export const toEmailSmtpSettingsResponseDto = (

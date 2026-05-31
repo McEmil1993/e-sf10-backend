@@ -170,3 +170,16 @@ export interface PasswordRecoverySettingsResponseDto {
 export interface UpdatePasswordRecoverySettingsDto {
   forgotPasswordMethod: ForgotPasswordMethod;
 }
+
+export interface PrincipalSettingsRecord {
+  activePrincipalUserId: number | null;
+  activePrincipalName: string | null;
+  activePrincipalEmail: string | null;
+  activePrincipalPosition: string | null;
+}
+
+export interface PrincipalSettingsResponseDto extends PrincipalSettingsRecord {}
+
+export interface UpdatePrincipalSettingsDto {
+  activePrincipalUserId: number | null;
+}

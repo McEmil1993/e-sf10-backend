@@ -3,12 +3,14 @@ import {
   toEmailSmtpSettingsResponseDto,
   toEmailTemplateResponseDto,
   toPasswordRecoverySettingsResponseDto,
+  toPrincipalSettingsResponseDto,
   toSchoolResponseDto,
 } from "./system.dto";
 import type {
   EmailTemplateKey,
   UpdatePasswordRecoverySettingsDto,
   UpdateEmailSmtpSettingsDto,
+  UpdatePrincipalSettingsDto,
   UpdateSchoolDto,
   UpsertEmailTemplateDto,
 } from "./system.interface";
@@ -85,6 +87,24 @@ export const systemService = {
   async updatePasswordRecoverySettings(payload: UpdatePasswordRecoverySettingsDto) {
     const forgotPasswordMethod = await systemRepository.updateForgotPasswordMethod(payload.forgotPasswordMethod);
     return toPasswordRecoverySettingsResponseDto(forgotPasswordMethod);
+  },
+
+  async getPrincipalSettings() {
+    const settings = await systemRepository.getPrincipalSettings();
+    return toPrincipalSettingsResponseDto(settings);
+  },
+
+  async updatePrincipalSettings(payload: UpdatePrincipalSettingsDto) {
+    if (payload.activePrincipalUserId !== null) {
+      const userExists = await systemRepository.userExistsAsActive(payload.activePrincipalUserId);
+
+      if (!userExists) {
+        throw new HttpError(400, "Selected principal must be an active user.");
+      }
+    }
+
+    const settings = await systemRepository.updatePrincipalSettings(payload.activePrincipalUserId);
+    return toPrincipalSettingsResponseDto(settings);
   },
 
   async listEmailTemplates(templateKey?: EmailTemplateKey) {

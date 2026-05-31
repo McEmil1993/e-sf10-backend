@@ -9,6 +9,7 @@ export const backupTableNames = [
   "school_years",
   "teachers",
   "sections",
+  "enrollments",
   "users",
   "user_roles",
   "user_permissions",

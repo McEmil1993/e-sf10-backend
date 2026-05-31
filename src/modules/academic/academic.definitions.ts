@@ -41,12 +41,79 @@ export const academicEntityDefinitions = {
     tableName: "sections",
     idColumn: "id",
     label: "Section",
-    orderBy: "grade_level ASC, section_name ASC, id ASC",
+    orderBy: "base.grade_level ASC, base.section_name ASC, base.id ASC",
+    joins: `
+      LEFT JOIN school_years sy ON sy.id = base.school_year_id AND sy.deleted_at IS NULL
+      LEFT JOIN teachers t ON t.id = base.adviser_id AND t.deleted_at IS NULL
+      LEFT JOIN users adviser_user ON adviser_user.id = t.user_id AND adviser_user.deleted_at IS NULL
+    `,
     fields: [
       { requestKey: "schoolYearId", columnName: "school_year_id", type: "number", required: true },
       { requestKey: "gradeLevel", columnName: "grade_level", type: "number", required: true },
       { requestKey: "sectionName", columnName: "section_name", type: "string", required: true },
       { requestKey: "adviserId", columnName: "adviser_id", type: "number", nullable: true },
+      { requestKey: "capacityLimit", columnName: "capacity_limit", type: "number", nullable: true },
+    ],
+    virtualFields: [
+      { requestKey: "schoolYearName", selectSql: "sy.name", type: "string" },
+      { requestKey: "schoolYearIsActive", selectSql: "sy.is_active", type: "boolean" },
+      {
+        requestKey: "adviserName",
+        selectSql:
+          "COALESCE(NULLIF(TRIM(adviser_user.name), ''), NULLIF(TRIM(CONCAT_WS(' ', adviser_user.first_name, adviser_user.middle_name, adviser_user.last_name, adviser_user.suffix)), ''), adviser_user.email)",
+        type: "string",
+      },
+    ],
+  },
+  enrollments: {
+    key: "enrollments",
+    tableName: "enrollments",
+    idColumn: "id",
+    label: "Enrollment",
+    orderBy: "sy.name DESC, sec.grade_level ASC, studentName ASC, base.id DESC",
+    joins: `
+      INNER JOIN students s ON s.id = base.student_id AND s.deleted_at IS NULL
+      INNER JOIN school_years sy ON sy.id = base.school_year_id AND sy.deleted_at IS NULL
+      INNER JOIN sections sec ON sec.id = base.section_id AND sec.deleted_at IS NULL
+      LEFT JOIN teachers t ON t.id = sec.adviser_id AND t.deleted_at IS NULL
+      LEFT JOIN users adviser_user ON adviser_user.id = t.user_id AND adviser_user.deleted_at IS NULL
+    `,
+    fields: [
+      { requestKey: "studentId", columnName: "student_id", type: "number", required: true },
+      { requestKey: "schoolYearId", columnName: "school_year_id", type: "number", required: true },
+      { requestKey: "sectionId", columnName: "section_id", type: "number", required: true },
+      { requestKey: "admissionType", columnName: "admission_type", type: "string", defaultValue: "continuing" },
+      { requestKey: "status", columnName: "status", type: "string", defaultValue: "enrolled" },
+      { requestKey: "enrollmentDate", columnName: "enrollment_date", type: "date", nullable: true },
+      { requestKey: "completionStatus", columnName: "completion_status", type: "string", defaultValue: "not_applicable" },
+      { requestKey: "previousSchoolName", columnName: "previous_school_name", type: "string", nullable: true },
+      { requestKey: "previousSchoolIdText", columnName: "previous_school_id_text", type: "string", nullable: true },
+      { requestKey: "previousGradeLevel", columnName: "previous_grade_level", type: "number", nullable: true },
+      { requestKey: "transferInDate", columnName: "transfer_in_date", type: "date", nullable: true },
+      { requestKey: "documentsSubmitted", columnName: "documents_submitted", type: "string", nullable: true },
+      { requestKey: "remarks", columnName: "remarks", type: "string", nullable: true },
+    ],
+    virtualFields: [
+      {
+        requestKey: "studentName",
+        selectSql: "NULLIF(TRIM(CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name, s.suffix)), '')",
+        type: "string",
+      },
+      { requestKey: "lrn", selectSql: "s.lrn", type: "string" },
+      { requestKey: "birthdate", selectSql: "s.birthdate", type: "date" },
+      { requestKey: "profilePicture", selectSql: "s.profile_picture", type: "string" },
+      { requestKey: "schoolYearName", selectSql: "sy.name", type: "string" },
+      { requestKey: "schoolYearIsActive", selectSql: "sy.is_active", type: "boolean" },
+      { requestKey: "sectionName", selectSql: "sec.section_name", type: "string" },
+      { requestKey: "gradeLevel", selectSql: "sec.grade_level", type: "number" },
+      { requestKey: "gradeSection", selectSql: "CONCAT('Grade ', sec.grade_level, ' - ', sec.section_name)", type: "string" },
+      { requestKey: "capacityLimit", selectSql: "sec.capacity_limit", type: "number" },
+      {
+        requestKey: "adviserName",
+        selectSql:
+          "COALESCE(NULLIF(TRIM(adviser_user.name), ''), NULLIF(TRIM(CONCAT_WS(' ', adviser_user.first_name, adviser_user.middle_name, adviser_user.last_name, adviser_user.suffix)), ''), adviser_user.email)",
+        type: "string",
+      },
     ],
   },
   "sf10-records": {

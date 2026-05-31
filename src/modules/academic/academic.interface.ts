@@ -4,6 +4,7 @@ export type AcademicEntityKey =
   | "school-years"
   | "teachers"
   | "sections"
+  | "enrollments"
   | "sf10-records"
   | "scholastic-records"
   | "grades"

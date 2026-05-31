@@ -87,6 +87,63 @@ export const academicRepository = {
     return rows[0] ? mapRow(rows[0], definition) : null;
   },
 
+  async findTeacherByUserId(definition: AcademicEntityDefinition, userId: number, includeDeleted = false) {
+    const [rows] = await db.query<AcademicRow[]>(
+      `
+        SELECT ${getSelectColumns(definition)}
+        FROM \`${definition.tableName}\` base
+        ${definition.joins ?? ""}
+        WHERE base.\`user_id\` = ?
+          ${includeDeleted ? "" : "AND base.deleted_at IS NULL"}
+        LIMIT 1
+      `,
+      [userId],
+    );
+
+    return rows[0] ? mapRow(rows[0], definition) : null;
+  },
+
+  async restoreTeacherByUserId(definition: AcademicEntityDefinition, userId: number) {
+    await db.execute(
+      `
+        UPDATE \`${definition.tableName}\`
+        SET deleted_at = NULL, updated_at = CURRENT_TIMESTAMP
+        WHERE \`user_id\` = ? AND deleted_at IS NOT NULL
+      `,
+      [userId],
+    );
+
+    return this.findTeacherByUserId(definition, userId);
+  },
+
+  async countOtherActiveSchoolYears(id: number) {
+    const [rows] = await db.query<AcademicRow[]>(
+      `
+        SELECT COUNT(*) AS total
+        FROM school_years
+        WHERE is_active = 1
+          AND deleted_at IS NULL
+          AND id <> ?
+      `,
+      [id],
+    );
+
+    return Number(rows[0]?.total ?? 0);
+  },
+
+  async deactivateOtherSchoolYears(activeSchoolYearId: number) {
+    await db.execute(
+      `
+        UPDATE school_years
+        SET is_active = 0, updated_at = CURRENT_TIMESTAMP
+        WHERE id <> ?
+          AND is_active = 1
+          AND deleted_at IS NULL
+      `,
+      [activeSchoolYearId],
+    );
+  },
+
   async create(definition: AcademicEntityDefinition, payload: Record<string, unknown>) {
     const columns = definition.fields.map((field) => field.columnName);
     const placeholders = columns.map(() => "?").join(", ");

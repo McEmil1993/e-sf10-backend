@@ -118,6 +118,7 @@ const createSectionsTableSql = `
     grade_level TINYINT UNSIGNED NOT NULL,
     section_name VARCHAR(100) NOT NULL,
     adviser_id BIGINT UNSIGNED NULL,
+    capacity_limit SMALLINT UNSIGNED NULL,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
@@ -127,6 +128,36 @@ const createSectionsTableSql = `
     KEY fk_sections_adviser (adviser_id),
     CONSTRAINT fk_sections_school_year FOREIGN KEY (school_year_id) REFERENCES school_years (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT fk_sections_adviser FOREIGN KEY (adviser_id) REFERENCES teachers (id) ON UPDATE NO ACTION ON DELETE SET NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
+const createEnrollmentsTableSql = `
+  CREATE TABLE IF NOT EXISTS enrollments (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    student_id BIGINT UNSIGNED NOT NULL,
+    school_year_id BIGINT UNSIGNED NOT NULL,
+    section_id BIGINT UNSIGNED NOT NULL,
+    admission_type VARCHAR(30) NOT NULL DEFAULT 'continuing',
+    status VARCHAR(30) NOT NULL DEFAULT 'enrolled',
+    enrollment_date DATE NULL,
+    completion_status VARCHAR(30) NOT NULL DEFAULT 'not_applicable',
+    previous_school_name VARCHAR(255) NULL,
+    previous_school_id_text VARCHAR(50) NULL,
+    previous_grade_level TINYINT UNSIGNED NULL,
+    transfer_in_date DATE NULL,
+    documents_submitted TEXT NULL,
+    remarks TEXT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY enrollments_student_school_year_unique (student_id, school_year_id),
+    KEY idx_enrollments_deleted_at (deleted_at),
+    KEY fk_enrollments_school_year (school_year_id),
+    KEY fk_enrollments_section (section_id),
+    CONSTRAINT fk_enrollments_student FOREIGN KEY (student_id) REFERENCES students (id) ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT fk_enrollments_school_year FOREIGN KEY (school_year_id) REFERENCES school_years (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
+    CONSTRAINT fk_enrollments_section FOREIGN KEY (section_id) REFERENCES sections (id) ON UPDATE NO ACTION ON DELETE RESTRICT
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
 
@@ -1192,6 +1223,92 @@ const ensureTeachersTableShape = async (): Promise<void> => {
   }
 };
 
+const ensureSectionsTableShape = async (): Promise<void> => {
+  if (!(await hasColumn("sections", "capacity_limit"))) {
+    await db.execute("ALTER TABLE sections ADD COLUMN capacity_limit SMALLINT UNSIGNED NULL AFTER adviser_id");
+  }
+};
+
+const ensureSingleActiveSchoolYear = async (): Promise<void> => {
+  const [rows] = await db.query<RowDataPacket[]>(
+    `
+      SELECT id
+      FROM school_years
+      WHERE is_active = 1 AND deleted_at IS NULL
+      ORDER BY
+        CASE
+          WHEN start_date IS NOT NULL
+            AND end_date IS NOT NULL
+            AND CURRENT_DATE BETWEEN start_date AND end_date THEN 0
+          WHEN start_date IS NOT NULL AND start_date <= CURRENT_DATE THEN 1
+          WHEN start_date IS NOT NULL THEN 2
+          ELSE 3
+        END ASC,
+        CASE WHEN start_date IS NOT NULL AND start_date <= CURRENT_DATE THEN start_date END DESC,
+        CASE WHEN start_date IS NOT NULL AND start_date > CURRENT_DATE THEN start_date END ASC,
+        updated_at DESC,
+        id DESC
+      LIMIT 1
+    `,
+  );
+
+  const activeSchoolYearId = Number(rows[0]?.id);
+
+  if (!Number.isInteger(activeSchoolYearId) || activeSchoolYearId <= 0) {
+    return;
+  }
+
+  await db.execute(
+    `
+      UPDATE school_years
+      SET is_active = 0, updated_at = CURRENT_TIMESTAMP
+      WHERE is_active = 1
+        AND deleted_at IS NULL
+        AND id <> ?
+    `,
+    [activeSchoolYearId],
+  );
+};
+
+const ensureEnrollmentsTableShape = async (): Promise<void> => {
+  if (await hasColumn("enrollments", "grade_level")) {
+    await db.execute("ALTER TABLE enrollments DROP COLUMN grade_level");
+  }
+
+  const columnMigrations = [
+    {
+      name: "admission_type",
+      sql: "ALTER TABLE enrollments ADD COLUMN admission_type VARCHAR(30) NOT NULL DEFAULT 'continuing' AFTER section_id",
+    },
+    {
+      name: "previous_school_name",
+      sql: "ALTER TABLE enrollments ADD COLUMN previous_school_name VARCHAR(255) NULL AFTER completion_status",
+    },
+    {
+      name: "previous_school_id_text",
+      sql: "ALTER TABLE enrollments ADD COLUMN previous_school_id_text VARCHAR(50) NULL AFTER previous_school_name",
+    },
+    {
+      name: "previous_grade_level",
+      sql: "ALTER TABLE enrollments ADD COLUMN previous_grade_level TINYINT UNSIGNED NULL AFTER previous_school_id_text",
+    },
+    {
+      name: "transfer_in_date",
+      sql: "ALTER TABLE enrollments ADD COLUMN transfer_in_date DATE NULL AFTER previous_grade_level",
+    },
+    {
+      name: "documents_submitted",
+      sql: "ALTER TABLE enrollments ADD COLUMN documents_submitted TEXT NULL AFTER transfer_in_date",
+    },
+  ];
+
+  for (const column of columnMigrations) {
+    if (!(await hasColumn("enrollments", column.name))) {
+      await db.execute(column.sql);
+    }
+  }
+};
+
 const ensureUsersTableShape = async (): Promise<void> => {
   for (const column of userColumnMigrations) {
     if (!(await hasUsersColumn(column.name))) {
@@ -1397,6 +1514,7 @@ export const initializeDatabase = async (): Promise<void> => {
   await db.execute(createGuardiansTableSql);
   await db.execute(createSectionsTableSql);
   await db.execute(createStudentGuardiansTableSql);
+  await db.execute(createEnrollmentsTableSql);
   await db.execute(createSf10RecordsTableSql);
   await db.execute(createScholasticRecordsTableSql);
   await db.execute(createStudentGradesTableSql);
@@ -1412,6 +1530,9 @@ export const initializeDatabase = async (): Promise<void> => {
   await ensureUsersTableShape();
   await ensurePositionsTableShape();
   await ensureTeachersTableShape();
+  await ensureSingleActiveSchoolYear();
+  await ensureSectionsTableShape();
+  await ensureEnrollmentsTableShape();
   await ensureSchoolsTableShape();
   await ensurePasswordRecoveryRequestsTableShape();
   await ensureStudentsTableShape();

@@ -14,6 +14,8 @@ systemRouter.get("/email/smtp", asyncHandler(systemController.getEmailSmtpSettin
 systemRouter.put("/email/smtp", asyncHandler(systemController.updateEmailSmtpSettings));
 systemRouter.get("/password-recovery", asyncHandler(systemController.getPasswordRecoverySettings));
 systemRouter.put("/password-recovery", asyncHandler(systemController.updatePasswordRecoverySettings));
+systemRouter.get("/principal", asyncHandler(systemController.getPrincipalSettings));
+systemRouter.put("/principal", asyncHandler(systemController.updatePrincipalSettings));
 systemRouter.get("/email/templates", asyncHandler(systemController.listEmailTemplates));
 systemRouter.post("/email/templates", asyncHandler(systemController.createEmailTemplate));
 systemRouter.put("/email/templates/:templateId", asyncHandler(systemController.updateEmailTemplate));

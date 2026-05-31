@@ -7,6 +7,7 @@ import type {
   EmailTemplateRecord,
   EmailTemplateRow,
   ForgotPasswordMethod,
+  PrincipalSettingsRecord,
   SchoolRecord,
   SchoolRow,
   UpdateEmailSmtpSettingsInput,
@@ -367,5 +368,95 @@ export const systemRepository = {
   async updateForgotPasswordMethod(forgotPasswordMethod: ForgotPasswordMethod): Promise<ForgotPasswordMethod> {
     await this.upsertSystemSetting("forgot_password_method", forgotPasswordMethod);
     return this.getForgotPasswordMethod();
+  },
+
+  async getPrincipalSettings(): Promise<PrincipalSettingsRecord> {
+    const value = await this.getSystemSetting("active_principal_user_id");
+    const activePrincipalUserId = value ? Number(value) : Number.NaN;
+
+    if (!Number.isInteger(activePrincipalUserId) || activePrincipalUserId <= 0) {
+      return {
+        activePrincipalUserId: null,
+        activePrincipalName: null,
+        activePrincipalEmail: null,
+        activePrincipalPosition: null,
+      };
+    }
+
+    const [rows] = await db.query<Array<{
+      id: number;
+      name: string | null;
+      email: string;
+      firstName: string;
+      middleName: string | null;
+      lastName: string | null;
+      suffix: string | null;
+      position: string | null;
+    } & RowDataPacket>>(
+      `
+        SELECT
+          id,
+          name,
+          email,
+          first_name AS firstName,
+          middle_name AS middleName,
+          last_name AS lastName,
+          suffix,
+          position
+        FROM users
+        WHERE id = ?
+          AND deleted_at IS NULL
+          AND status = 'active'
+        LIMIT 1
+      `,
+      [activePrincipalUserId],
+    );
+
+    const principal = rows[0];
+
+    if (!principal) {
+      return {
+        activePrincipalUserId: null,
+        activePrincipalName: null,
+        activePrincipalEmail: null,
+        activePrincipalPosition: null,
+      };
+    }
+
+    const principalName =
+      principal.name?.trim() ||
+      [principal.firstName, principal.middleName, principal.lastName, principal.suffix]
+        .map((part) => part?.trim() ?? "")
+        .filter(Boolean)
+        .join(" ") ||
+      principal.email;
+
+    return {
+      activePrincipalUserId,
+      activePrincipalName: principalName,
+      activePrincipalEmail: principal.email,
+      activePrincipalPosition: principal.position,
+    };
+  },
+
+  async userExistsAsActive(userId: number): Promise<boolean> {
+    const [rows] = await db.query<Array<{ id: number } & RowDataPacket>>(
+      `
+        SELECT id
+        FROM users
+        WHERE id = ?
+          AND deleted_at IS NULL
+          AND status = 'active'
+        LIMIT 1
+      `,
+      [userId],
+    );
+
+    return rows.length > 0;
+  },
+
+  async updatePrincipalSettings(activePrincipalUserId: number | null): Promise<PrincipalSettingsRecord> {
+    await this.upsertSystemSetting("active_principal_user_id", activePrincipalUserId ? String(activePrincipalUserId) : "");
+    return this.getPrincipalSettings();
   },
 };
